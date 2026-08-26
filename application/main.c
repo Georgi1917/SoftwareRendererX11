@@ -1,0 +1,165 @@
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+#include <stdint.h>
+#include <stdio.h>
+#include <stdbool.h>
+#include <malloc.h>
+#include <math.h>
+#include <stdlib.h>
+
+#include "draw.h"
+
+#define W_WIDTH  800
+#define H_HEIGHT 600
+
+void clear_screen(unsigned char* buffer);
+
+int main(void)
+{
+    unsigned char* canvas = malloc(W_WIDTH * H_HEIGHT * 4);
+
+    for (int y = 0; y < H_HEIGHT; y++) {
+        for (int x = 0; x < W_WIDTH; x++) {
+            uint8_t r = 255;
+            uint8_t g = 255;
+            uint8_t b = 255;
+
+            canvas[4 * (x + y * W_WIDTH) + 0] = r;
+            canvas[4 * (x + y * W_WIDTH) + 1] = g;
+            canvas[4 * (x + y * W_WIDTH) + 2] = b;
+            canvas[4 * (x + y * W_WIDTH) + 3] = 0;
+        }
+    }
+
+    Display *display = XOpenDisplay(NULL);
+
+    if (display == NULL) {
+        fprintf(stderr, "Could not open X display\n");
+        return 1;
+    }
+
+    int screen = DefaultScreen(display);
+
+    Window window = XCreateSimpleWindow(
+        display,
+        RootWindow(display, screen),
+        100, 100,
+        W_WIDTH, H_HEIGHT,
+        0,
+        BlackPixel(display, screen),
+        BlackPixel(display, screen)
+    );
+
+    XStoreName(display, window, "X11 Framebuffer");
+
+    XSelectInput(
+        display,
+        window,
+        ExposureMask |
+        KeyPressMask |
+        StructureNotifyMask
+    );
+
+    XMapWindow(display, window);
+
+    XImage *image = XCreateImage(
+        display,
+        DefaultVisual(display, screen),
+        DefaultDepth(display, screen),
+        ZPixmap,
+        0,
+        (unsigned char *)canvas,
+        W_WIDTH,
+        H_HEIGHT,
+        32,
+        W_WIDTH * sizeof(unsigned char) * 4
+    );
+
+    if (image == NULL) {
+        fprintf(stderr, "XCreateImage failed\n");
+
+        XDestroyWindow(display, window);
+        XCloseDisplay(display);
+
+        return 1;
+    }
+
+    GC gc = XCreateGC(display, window, 0, NULL);
+
+    int running = 1;
+    XEvent event;
+
+    point_i point0 = {10, 10};
+    point_i point1 = {600, 500};
+    point_i point2 = {700, 500};
+
+    pixel_data data = {255, 0, 0};
+
+    while (running) {
+
+        clear_screen(canvas);
+
+        draw_triangle_fill(point0, point1, point2, data, canvas);
+
+        XPutImage(
+            display,
+            window,
+            gc,
+            image,
+            0, 0,
+            0, 0,
+            W_WIDTH,
+            H_HEIGHT
+        );
+
+        if (!XPending(display)) {
+            continue;
+        }
+
+        XNextEvent(display, &event);
+
+        switch (event.type) {
+
+        case Expose:
+
+            XFlush(display);
+
+            break;
+
+        case KeyPress:
+            
+            running = 0;
+            break;
+
+        case DestroyNotify:
+
+            running = 0;
+            break;
+        }
+    }
+
+    XFreeGC(display, gc);
+
+    image->data = NULL;
+    XDestroyImage(image);
+
+    XDestroyWindow(display, window);
+
+    XCloseDisplay(display);
+
+    free(canvas);
+
+    return 0;
+}
+
+void clear_screen(unsigned char* buffer) {
+
+    pixel_data data = {255, 255, 255};
+
+    for (uint16_t y = 0; y < H_HEIGHT; y++) {
+        for (uint16_t x = 0; x < W_WIDTH; x++) {
+            put_pixel(x, y, W_WIDTH, H_HEIGHT, buffer, data);
+        }
+    }
+}
