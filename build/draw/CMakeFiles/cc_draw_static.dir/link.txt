@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcc_draw_static.a CMakeFiles/cc_draw_static.dir/draw.c.o
-/usr/bin/ranlib libcc_draw_static.a

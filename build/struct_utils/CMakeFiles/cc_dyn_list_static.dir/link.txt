@@ -1,2 +1,0 @@
-/usr/bin/ar qc libcc_dyn_list_static.a CMakeFiles/cc_dyn_list_static.dir/dyn_list.c.o
-/usr/bin/ranlib libcc_dyn_list_static.a
