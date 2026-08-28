@@ -1,7 +1,36 @@
 #include <stdlib.h>
+#include <stdio.h>
+
+#include <math.h>
 
 #include "draw.h"
-#include "../struct_utils/dyn_list.h"
+#include "dyn_list.h"
+
+#define PI 3.1415926535
+
+double_t _convert_to_radians(double_t degrees) {
+    return degrees * PI / 180.0;
+}
+
+point_d _normalize_point_coords(point_i p, uint16_t max_val_x, uint16_t max_val_y) {
+    point_d ret_point = {0};
+    ret_point.x = 2.0 * ((double_t)p.x / (double_t)max_val_x) - 1.0;
+    ret_point.y = 1.0 - 2.0 * ((double_t)p.y / (double_t)max_val_y);
+    return ret_point;
+}
+
+point_i _denormalize_point_coords(point_d p, uint16_t max_val_x, uint16_t max_val_y) {
+    point_i ret_point = {0};
+
+    double_t width = WIDTH / 2.0;
+    double_t height = HEIGHT / 2.0;
+    double_t scale = HEIGHT / 2.0;
+
+    ret_point.x = (int16_t)round(width + p.x * scale);
+    ret_point.y = (int16_t)round(height - p.y * scale);
+
+    return ret_point;
+}
 
 list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1) {
 
@@ -24,7 +53,7 @@ list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1
 
 }
 
-void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, unsigned char* buffer) {
+void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer) {
     int32_t dx = x1 - x0;
     int32_t dy = y1 - y0;
     int8_t xi = 1;
@@ -55,7 +84,7 @@ void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, unsigne
 
 }
 
-void _draw_line_low(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, unsigned char* buffer) {
+void _draw_line_low(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer) {
     int32_t dx = x1 - x0;
     int32_t dy = y1 - y0;
     int8_t yi = 1;
@@ -109,26 +138,26 @@ bool put_pixel(uint32_t x, uint32_t y,
 
 }
 
-void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, unsigned char* buffer) {
+void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer) {
     if (abs(y1 - y0) < abs(x1 - x0)) {
-        if (x0 > x1) _draw_line_low(x1, y1, x0, y0, buffer);
-        else _draw_line_low(x0, y0, x1, y1, buffer);
+        if (x0 > x1) _draw_line_low(x1, y1, x0, y0, p_data, buffer);
+        else _draw_line_low(x0, y0, x1, y1, p_data, buffer);
     }
     else {
-        if (y0 > y1) _draw_line_high(x1, y1, x0, y0, buffer);
-        else _draw_line_high(x0, y0, x1, y1, buffer);
+        if (y0 > y1) _draw_line_high(x1, y1, x0, y0, p_data, buffer);
+        else _draw_line_high(x0, y0, x1, y1, p_data, buffer);
     }
 }
 
-void draw_line_p(point_i p0, point_i p1, unsigned char* buffer) {
-    draw_line(p0.x, p0.y, p1.x, p1.y, buffer);
+void draw_line_p(point_i p0, point_i p1, pixel_data p_data, unsigned char* buffer) {
+    draw_line(p0.x, p0.y, p1.x, p1.y, p_data, buffer);
 }
 
-void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, unsigned char* buffer) {
+void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer) {
 
-    draw_line_p(p0, p1, buffer);
-    draw_line_p(p1, p2, buffer);
-    draw_line_p(p0, p2, buffer);
+    draw_line_p(p0, p1, p_data, buffer);
+    draw_line_p(p1, p2, p_data, buffer);
+    draw_line_p(p0, p2, p_data, buffer);
 
 }
 
@@ -171,11 +200,9 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, u
         x_right = x02;
     }
 
-    pixel_data data = {255, 0, 0};
-
     for (uint16_t y = p0.y; y < p2.y; y++) {
         for (uint16_t x = (uint16_t)x_left->data[y - p0.y]; x < x_right->data[y - p0.y]; x++) {
-            put_pixel(x, y, WIDTH, HEIGHT, buffer, data);
+            put_pixel(x, y, WIDTH, HEIGHT, buffer, p_data);
         }
     }
 
@@ -183,5 +210,41 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, u
     free_list(x12);
     free_list(x02);
     free_list(x012);
+
+}
+
+void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer) {
+
+    double_t rot_angle = _convert_to_radians(90.0);
+
+    double_t rot_mat[4] = {0};
+
+    point_d p0d = _normalize_point_coords(p0, 800, 600);
+    point_d p1d = _normalize_point_coords(p1, 800, 600);
+    point_d p2d = _normalize_point_coords(p2, 800, 600);
+
+    point_d temp_0 = {0};
+    point_d temp_1 = {0};
+    point_d temp_2 = {0};
+
+    rot_mat[0] = cos(rot_angle);
+    rot_mat[1] = -(sin(rot_angle));
+    rot_mat[2] = sin(rot_angle);
+    rot_mat[3] = cos(rot_angle);
+    
+    temp_0.x = p0d.x * rot_mat[0] + p0d.y * rot_mat[1];
+    temp_0.y = p0d.x * rot_mat[2] + p0d.y * rot_mat[3];
+
+    temp_1.x = p1d.x * rot_mat[0] + p1d.y * rot_mat[1];
+    temp_1.y = p1d.x * rot_mat[2] + p1d.y * rot_mat[3];
+    
+    temp_2.x = p2d.x * rot_mat[0] + p2d.y * rot_mat[1];
+    temp_2.y = p2d.x * rot_mat[2] + p2d.y * rot_mat[3];
+
+    point_i final_0 = _denormalize_point_coords(temp_0, 800, 600);
+    point_i final_1 = _denormalize_point_coords(temp_1, 800, 600);
+    point_i final_2 = _denormalize_point_coords(temp_2, 800, 600);
+
+    draw_triangle_fill(final_0, final_1, final_2, p_data, buffer);
 
 }

@@ -9,28 +9,16 @@
 #include <stdlib.h>
 
 #include "draw.h"
+#include "colors.h"
 
 #define W_WIDTH  800
 #define H_HEIGHT 600
 
-void clear_screen(unsigned char* buffer);
+void clear_screen(unsigned char* buffer, pixel_data p_data);
 
 int main(void)
 {
     unsigned char* canvas = malloc(W_WIDTH * H_HEIGHT * 4);
-
-    for (int y = 0; y < H_HEIGHT; y++) {
-        for (int x = 0; x < W_WIDTH; x++) {
-            uint8_t r = 255;
-            uint8_t g = 255;
-            uint8_t b = 255;
-
-            canvas[4 * (x + y * W_WIDTH) + 0] = r;
-            canvas[4 * (x + y * W_WIDTH) + 1] = g;
-            canvas[4 * (x + y * W_WIDTH) + 2] = b;
-            canvas[4 * (x + y * W_WIDTH) + 3] = 0;
-        }
-    }
 
     Display *display = XOpenDisplay(NULL);
 
@@ -90,17 +78,16 @@ int main(void)
     int running = 1;
     XEvent event;
 
-    point_i point0 = {10, 10};
-    point_i point1 = {600, 500};
-    point_i point2 = {700, 500};
-
-    pixel_data data = {255, 0, 0};
+    point_i p0 = {400, 100};
+    point_i p2 = {550, 400};
+    point_i p1 = {250, 400};
 
     while (running) {
 
-        clear_screen(canvas);
+        clear_screen(canvas, LIGHTGRAY);
 
-        draw_triangle_fill(point0, point1, point2, data, canvas);
+        draw_triangle_fill(p0, p1, p2, RED, canvas);
+        draw_triangle_transform(p0, p1, p2, BLUE, canvas);
 
         XPutImage(
             display,
@@ -153,13 +140,11 @@ int main(void)
     return 0;
 }
 
-void clear_screen(unsigned char* buffer) {
-
-    pixel_data data = {255, 255, 255};
+void clear_screen(unsigned char* buffer, pixel_data p_data) {
 
     for (uint16_t y = 0; y < H_HEIGHT; y++) {
         for (uint16_t x = 0; x < W_WIDTH; x++) {
-            put_pixel(x, y, W_WIDTH, H_HEIGHT, buffer, data);
+            put_pixel(x, y, W_WIDTH, H_HEIGHT, buffer, p_data);
         }
     }
 }
