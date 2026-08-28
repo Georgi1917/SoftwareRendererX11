@@ -10,16 +10,14 @@
 
 #include "draw.h"
 #include "colors.h"
+#include "screen_buffer.h"
 
-#define W_WIDTH  800
-#define H_HEIGHT 600
-
-void clear_screen(unsigned char* buffer, pixel_data p_data);
+void clear_screen(screen_buffer* buffer, pixel_data p_data);
 
 int main(void)
 {
-    unsigned char* canvas = malloc(W_WIDTH * H_HEIGHT * 4);
 
+    screen_buffer* back_buffer = init_screen_buffer(800, 600);
     Display *display = XOpenDisplay(NULL);
 
     if (display == NULL) {
@@ -33,7 +31,8 @@ int main(void)
         display,
         RootWindow(display, screen),
         100, 100,
-        W_WIDTH, H_HEIGHT,
+        back_buffer->width, 
+        back_buffer->height,
         0,
         BlackPixel(display, screen),
         BlackPixel(display, screen)
@@ -57,11 +56,11 @@ int main(void)
         DefaultDepth(display, screen),
         ZPixmap,
         0,
-        (unsigned char *)canvas,
-        W_WIDTH,
-        H_HEIGHT,
+        back_buffer->mem,
+        back_buffer->width,
+        back_buffer->height,
         32,
-        W_WIDTH * sizeof(unsigned char) * 4
+        back_buffer->width * sizeof(uint8_t) * 4
     );
 
     if (image == NULL) {
@@ -84,10 +83,10 @@ int main(void)
 
     while (running) {
 
-        clear_screen(canvas, LIGHTGRAY);
+        clear_screen(back_buffer, LIGHTGRAY);
 
-        draw_triangle_fill(p0, p1, p2, RED, canvas);
-        draw_triangle_transform(p0, p1, p2, BLUE, canvas);
+        draw_triangle_fill(p0, p1, p2, RED, back_buffer);
+        draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
 
         XPutImage(
             display,
@@ -96,8 +95,8 @@ int main(void)
             image,
             0, 0,
             0, 0,
-            W_WIDTH,
-            H_HEIGHT
+            back_buffer->width,
+            back_buffer->height
         );
 
         if (!XPending(display)) {
@@ -135,16 +134,16 @@ int main(void)
 
     XCloseDisplay(display);
 
-    free(canvas);
+    free_screen_buffer(back_buffer);
 
     return 0;
 }
 
-void clear_screen(unsigned char* buffer, pixel_data p_data) {
+void clear_screen(screen_buffer* buffer, pixel_data p_data) {
 
-    for (uint16_t y = 0; y < H_HEIGHT; y++) {
-        for (uint16_t x = 0; x < W_WIDTH; x++) {
-            put_pixel(x, y, W_WIDTH, H_HEIGHT, buffer, p_data);
+    for (uint16_t y = 0; y < buffer->height; y++) {
+        for (uint16_t x = 0; x < buffer->width; x++) {
+            put_pixel(x, y, buffer, p_data);
         }
     }
 }

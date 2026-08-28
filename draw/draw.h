@@ -4,8 +4,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#define WIDTH 800
-#define HEIGHT 600
+#include "screen_buffer.h"
 
 typedef struct {
     uint8_t r;
@@ -28,14 +27,12 @@ typedef struct {
     double_t y;
 } point_d;
 
-bool put_pixel(uint32_t x, uint32_t y, 
-               uint16_t width, uint16_t height, 
-               unsigned char* buffer, pixel_data data);
+bool put_pixel(uint32_t x, uint32_t y, screen_buffer* buffer, pixel_data data);
 
-void draw_line_p(point_i p0, point_i p1, pixel_data p_data, unsigned char* buffer);
-void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer);
-void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer);
-void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer);
-void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer);
+void draw_line_p(point_i p0, point_i p1, pixel_data p_data, screen_buffer* buffer);
+void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, screen_buffer* buffer);
+void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer);
+void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer);
+void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer);
 
 #endif //__DRAW_H__

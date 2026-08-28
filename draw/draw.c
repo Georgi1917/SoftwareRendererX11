@@ -22,9 +22,9 @@ point_d _normalize_point_coords(point_i p, uint16_t max_val_x, uint16_t max_val_
 point_i _denormalize_point_coords(point_d p, uint16_t max_val_x, uint16_t max_val_y) {
     point_i ret_point = {0};
 
-    double_t width = WIDTH / 2.0;
-    double_t height = HEIGHT / 2.0;
-    double_t scale = HEIGHT / 2.0;
+    double_t width =  max_val_x / 2.0;
+    double_t height = max_val_y/ 2.0;
+    double_t scale =  max_val_y/ 2.0;
 
     ret_point.x = (int16_t)round(width + p.x * scale);
     ret_point.y = (int16_t)round(height - p.y * scale);
@@ -53,7 +53,7 @@ list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1
 
 }
 
-void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer) {
+void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, screen_buffer* buffer) {
     int32_t dx = x1 - x0;
     int32_t dy = y1 - y0;
     int8_t xi = 1;
@@ -66,11 +66,10 @@ void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_d
     int32_t D = (2 * dx) - dy;
 
     int32_t x = x0;
-    pixel_data data = {255, 0, 0};
 
-    for (int y = y0; y <= y1; y++) {
+    for (int16_t y = y0; y <= y1; y++) {
 
-        put_pixel(x, y, WIDTH, HEIGHT, buffer, data);
+        put_pixel(x, y, buffer, p_data);
 
         if (D > 0) {
             x = x + xi;
@@ -84,7 +83,7 @@ void _draw_line_high(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_d
 
 }
 
-void _draw_line_low(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer) {
+void _draw_line_low(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, screen_buffer* buffer) {
     int32_t dx = x1 - x0;
     int32_t dy = y1 - y0;
     int8_t yi = 1;
@@ -97,11 +96,10 @@ void _draw_line_low(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_da
     int32_t D = (2 * dy) - dx;
 
     int32_t y = y0;
-    pixel_data data = {255, 0, 0};
 
-    for (int x = x0; x <= x1; x++) {
+    for (int16_t x = x0; x <= x1; x++) {
 
-        put_pixel(x, y, WIDTH, HEIGHT, buffer, data);
+        put_pixel(x, y, buffer, p_data);
 
         if (D > 0) {
             y = y + yi;
@@ -122,23 +120,21 @@ void _swap_points(point_i *a, point_i *b) {
 
 }
 
-bool put_pixel(uint32_t x, uint32_t y, 
-               uint16_t width, uint16_t height, 
-               unsigned char* buffer, pixel_data data) {
+bool put_pixel(uint32_t x, uint32_t y, screen_buffer* buffer, pixel_data data) {
 
-    if ((x > width) || (x < 0) || (y > height) || (y < 0))
+    if ((x > buffer->width) || (x < 0) || (y > buffer->height) || (y < 0))
       return false;
 
-    buffer[4 * (x + y * width) + 0] = data.b;
-    buffer[4 * (x + y * width) + 1] = data.g;
-    buffer[4 * (x + y * width) + 2] = data.r;
-    buffer[4 * (x + y * width) + 3] = 0;
+    buffer->mem[4 * (x + y * buffer->width) + 0] = data.b;
+    buffer->mem[4 * (x + y * buffer->width) + 1] = data.g;
+    buffer->mem[4 * (x + y * buffer->width) + 2] = data.r;
+    buffer->mem[4 * (x + y * buffer->width) + 3] = 0;
 
     return true;
 
 }
 
-void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, unsigned char* buffer) {
+void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_data, screen_buffer* buffer) {
     if (abs(y1 - y0) < abs(x1 - x0)) {
         if (x0 > x1) _draw_line_low(x1, y1, x0, y0, p_data, buffer);
         else _draw_line_low(x0, y0, x1, y1, p_data, buffer);
@@ -149,11 +145,11 @@ void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_
     }
 }
 
-void draw_line_p(point_i p0, point_i p1, pixel_data p_data, unsigned char* buffer) {
+void draw_line_p(point_i p0, point_i p1, pixel_data p_data, screen_buffer* buffer) {
     draw_line(p0.x, p0.y, p1.x, p1.y, p_data, buffer);
 }
 
-void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer) {
+void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
 
     draw_line_p(p0, p1, p_data, buffer);
     draw_line_p(p1, p2, p_data, buffer);
@@ -161,7 +157,7 @@ void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_da
 
 }
 
-void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer) {
+void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
 
     if (p1.y < p0.y) { _swap_points(&p1, &p0); }
     if (p2.y < p0.y) { _swap_points(&p2, &p0); }
@@ -202,7 +198,7 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, u
 
     for (uint16_t y = p0.y; y < p2.y; y++) {
         for (uint16_t x = (uint16_t)x_left->data[y - p0.y]; x < x_right->data[y - p0.y]; x++) {
-            put_pixel(x, y, WIDTH, HEIGHT, buffer, p_data);
+            put_pixel(x, y, buffer, p_data);
         }
     }
 
@@ -213,15 +209,15 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, u
 
 }
 
-void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, unsigned char* buffer) {
+void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
 
     double_t rot_angle = _convert_to_radians(90.0);
 
     double_t rot_mat[4] = {0};
 
-    point_d p0d = _normalize_point_coords(p0, 800, 600);
-    point_d p1d = _normalize_point_coords(p1, 800, 600);
-    point_d p2d = _normalize_point_coords(p2, 800, 600);
+    point_d p0d = _normalize_point_coords(p0, buffer->width, buffer->height);
+    point_d p1d = _normalize_point_coords(p1, buffer->width, buffer->height);
+    point_d p2d = _normalize_point_coords(p2, buffer->width, buffer->height);
 
     point_d temp_0 = {0};
     point_d temp_1 = {0};
@@ -241,9 +237,9 @@ void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_da
     temp_2.x = p2d.x * rot_mat[0] + p2d.y * rot_mat[1];
     temp_2.y = p2d.x * rot_mat[2] + p2d.y * rot_mat[3];
 
-    point_i final_0 = _denormalize_point_coords(temp_0, 800, 600);
-    point_i final_1 = _denormalize_point_coords(temp_1, 800, 600);
-    point_i final_2 = _denormalize_point_coords(temp_2, 800, 600);
+    point_i final_0 = _denormalize_point_coords(temp_0, buffer->width, buffer->height);
+    point_i final_1 = _denormalize_point_coords(temp_1, buffer->width, buffer->height);
+    point_i final_2 = _denormalize_point_coords(temp_2, buffer->width, buffer->height);
 
     draw_triangle_fill(final_0, final_1, final_2, p_data, buffer);
 
