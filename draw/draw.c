@@ -23,13 +23,65 @@ point_i _denormalize_point_coords(point_d p, uint16_t max_val_x, uint16_t max_va
     point_i ret_point = {0};
 
     double_t width =  max_val_x / 2.0;
-    double_t height = max_val_y/ 2.0;
-    double_t scale =  max_val_y/ 2.0;
+    double_t height = max_val_y / 2.0;
+    double_t scale =  max_val_y / 2.0;
 
     ret_point.x = (int16_t)round(width + p.x * scale);
     ret_point.y = (int16_t)round(height - p.y * scale);
 
+    // ret_point.x = ((p.x + 1.0) / 2.0)  * max_val_x;
+    // ret_point.y = ((p.y - 1.0) / -2.0) * max_val_y;
+
     return ret_point;
+}
+
+void test_denormalization(point_i p0, point_i p1, point_i p2) {
+
+    double_t rot_angle = _convert_to_radians(45.0);
+
+    printf("Points before nomralization : \n");
+    printf("P0 : %d ; %d\n", p0.x, p0.y);
+    printf("P1 : %d ; %d\n", p1.x, p1.y);
+    printf("P2 : %d ; %d\n", p2.x, p2.y);
+
+    point_d p0n = _normalize_point_coords(p0, 800, 600);
+    point_d p1n = _normalize_point_coords(p1, 800, 600);
+    point_d p2n = _normalize_point_coords(p2, 800, 600);
+
+    point_d temp_0 = {0};
+    point_d temp_1 = {0};
+    point_d temp_2 = {0};
+
+    double_t rot_mat[4] = {0};
+
+    rot_mat[0] = cos(rot_angle);
+    rot_mat[1] = -(sin(rot_angle));
+    rot_mat[2] = sin(rot_angle);
+    rot_mat[3] = cos(rot_angle);
+    
+    temp_0.x = p0n.x * rot_mat[0] + p0n.y * rot_mat[1];
+    temp_0.y = p0n.x * rot_mat[2] + p0n.y * rot_mat[3];
+
+    temp_1.x = p1n.x * rot_mat[0] + p1n.y * rot_mat[1];
+    temp_1.y = p1n.x * rot_mat[2] + p1n.y * rot_mat[3];
+    
+    temp_2.x = p2n.x * rot_mat[0] + p2n.y * rot_mat[1];
+    temp_2.y = p2n.x * rot_mat[2] + p2n.y * rot_mat[3];
+
+    printf("Points after normalization (and rotation) : \n");
+    printf("P0 : %f ; %f\n", temp_0.x, temp_0.y);
+    printf("P1 : %f ; %f\n", temp_1.x, temp_1.y);
+    printf("P2 : %f ; %f\n", temp_2.x, temp_2.y);
+
+    point_i p0d = _denormalize_point_coords(temp_0, 800, 600);
+    point_i p1d = _denormalize_point_coords(temp_1, 800, 600);
+    point_i p2d = _denormalize_point_coords(temp_2, 800, 600);
+
+    printf("Points after denormalization (and rotation) : \n");
+    printf("P0 : %d ; %d\n", p0d.x, p0d.y);
+    printf("P1 : %d ; %d\n", p1d.x, p1d.y);
+    printf("P2 : %d ; %d\n", p2d.x, p2d.y);
+
 }
 
 list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1) {
@@ -211,7 +263,7 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, s
 
 void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
 
-    double_t rot_angle = _convert_to_radians(90.0);
+    double_t rot_angle = _convert_to_radians(0.0);
 
     double_t rot_mat[4] = {0};
 

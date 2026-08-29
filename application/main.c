@@ -81,12 +81,19 @@ int main(void)
     point_i p2 = {550, 400};
     point_i p1 = {250, 400};
 
+    point_i p0p = {150, 200};
+    point_i p1p = {250, 300};
+    point_i p2p = {0, 300};
+
     while (running) {
 
         clear_screen(back_buffer, LIGHTGRAY);
 
-        draw_triangle_fill(p0, p1, p2, RED, back_buffer);
-        draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
+        //draw_triangle_fill(p0, p1, p2, RED, back_buffer);
+        //draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
+        //draw_triangle_transform(p0p, p1p, p2p, BLUE, back_buffer);
+
+        test_denormalization(p0, p1, p2);
 
         XPutImage(
             display,
