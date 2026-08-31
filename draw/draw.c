@@ -21,16 +21,12 @@ point_d _normalize_point_coords(point_i p, uint16_t max_val_x, uint16_t max_val_
 
 point_i _denormalize_point_coords(point_d p, uint16_t max_val_x, uint16_t max_val_y) {
     point_i ret_point = {0};
+    double_t aspect_ratio = (double_t)max_val_x / (double_t)max_val_y;
 
-    double_t width =  max_val_x / 2.0;
-    double_t height = max_val_y / 2.0;
-    double_t scale =  max_val_y / 2.0;
+    p.x /= aspect_ratio;
 
-    ret_point.x = (int16_t)round(width + p.x * scale);
-    ret_point.y = (int16_t)round(height - p.y * scale);
-
-    // ret_point.x = ((p.x + 1.0) / 2.0)  * max_val_x;
-    // ret_point.y = ((p.y - 1.0) / -2.0) * max_val_y;
+    ret_point.x = ((p.x + 1.0) / 2.0)  * max_val_x;
+    ret_point.y = ((p.y - 1.0) / -2.0) * max_val_y;
 
     return ret_point;
 }
@@ -209,18 +205,22 @@ void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_da
 
 }
 
-void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_fill(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer) {
 
-    if (p1.y < p0.y) { _swap_points(&p1, &p0); }
-    if (p2.y < p0.y) { _swap_points(&p2, &p0); }
-    if (p2.y < p1.y) { _swap_points(&p2, &p1); }
+    point_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
+    point_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
+    point_i p2n = _denormalize_point_coords(p2, buffer->width, buffer->height);
+
+    if (p1n.y < p0n.y) { _swap_points(&p1n, &p0n); }
+    if (p2n.y < p0n.y) { _swap_points(&p2n, &p0n); }
+    if (p2n.y < p1n.y) { _swap_points(&p2n, &p1n); }
 
     int16_t first = 0;
     int16_t final = 0;
 
-    list_f* x01 = _linear_interpolation(p0.y, p0.x, p1.y, p1.x);
-    list_f* x12 = _linear_interpolation(p1.y, p1.x, p2.y, p2.x);
-    list_f* x02 = _linear_interpolation(p0.y, p0.x, p2.y, p2.x);
+    list_f* x01 = _linear_interpolation(p0n.y, p0n.x, p1n.y, p1n.x);
+    list_f* x12 = _linear_interpolation(p1n.y, p1n.x, p2n.y, p2n.x);
+    list_f* x02 = _linear_interpolation(p0n.y, p0n.x, p2n.y, p2n.x);
 
     list_f* x_left = init_list();
     list_f* x_right = init_list();
@@ -248,8 +248,8 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, s
         x_right = x02;
     }
 
-    for (uint16_t y = p0.y; y < p2.y; y++) {
-        for (uint16_t x = (uint16_t)x_left->data[y - p0.y]; x < x_right->data[y - p0.y]; x++) {
+    for (uint16_t y = p0n.y; y < p2n.y; y++) {
+        for (uint16_t x = (uint16_t)x_left->data[y - p0n.y]; x < x_right->data[y - p0n.y]; x++) {
             put_pixel(x, y, buffer, p_data);
         }
     }
@@ -261,15 +261,11 @@ void draw_triangle_fill(point_i p0, point_i p1, point_i p2, pixel_data p_data, s
 
 }
 
-void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_transform(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer) {
 
-    double_t rot_angle = _convert_to_radians(0.0);
+    double_t rot_angle = _convert_to_radians(90.0);
 
     double_t rot_mat[4] = {0};
-
-    point_d p0d = _normalize_point_coords(p0, buffer->width, buffer->height);
-    point_d p1d = _normalize_point_coords(p1, buffer->width, buffer->height);
-    point_d p2d = _normalize_point_coords(p2, buffer->width, buffer->height);
 
     point_d temp_0 = {0};
     point_d temp_1 = {0};
@@ -280,19 +276,15 @@ void draw_triangle_transform(point_i p0, point_i p1, point_i p2, pixel_data p_da
     rot_mat[2] = sin(rot_angle);
     rot_mat[3] = cos(rot_angle);
     
-    temp_0.x = p0d.x * rot_mat[0] + p0d.y * rot_mat[1];
-    temp_0.y = p0d.x * rot_mat[2] + p0d.y * rot_mat[3];
+    temp_0.x = p0.x * rot_mat[0] + p0.y * rot_mat[1];
+    temp_0.y = p0.x * rot_mat[2] + p0.y * rot_mat[3];
 
-    temp_1.x = p1d.x * rot_mat[0] + p1d.y * rot_mat[1];
-    temp_1.y = p1d.x * rot_mat[2] + p1d.y * rot_mat[3];
+    temp_1.x = p1.x * rot_mat[0] + p1.y * rot_mat[1];
+    temp_1.y = p1.x * rot_mat[2] + p1.y * rot_mat[3];
     
-    temp_2.x = p2d.x * rot_mat[0] + p2d.y * rot_mat[1];
-    temp_2.y = p2d.x * rot_mat[2] + p2d.y * rot_mat[3];
+    temp_2.x = p2.x * rot_mat[0] + p2.y * rot_mat[1];
+    temp_2.y = p2.x * rot_mat[2] + p2.y * rot_mat[3];
 
-    point_i final_0 = _denormalize_point_coords(temp_0, buffer->width, buffer->height);
-    point_i final_1 = _denormalize_point_coords(temp_1, buffer->width, buffer->height);
-    point_i final_2 = _denormalize_point_coords(temp_2, buffer->width, buffer->height);
-
-    draw_triangle_fill(final_0, final_1, final_2, p_data, buffer);
+    draw_triangle_fill(temp_0, temp_1, temp_2, p_data, buffer);
 
 }

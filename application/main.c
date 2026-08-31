@@ -77,23 +77,21 @@ int main(void)
     int running = 1;
     XEvent event;
 
-    point_i p0 = {400, 100};
-    point_i p2 = {550, 400};
-    point_i p1 = {250, 400};
+    point_d p0 = {0.0, 0.5};
+    point_d p1 = {-0.5, -0.5};
+    point_d p2 = {0.5, -0.5};
 
-    point_i p0p = {150, 200};
-    point_i p1p = {250, 300};
-    point_i p2p = {0, 300};
+    point_d p0p = {-0.75, 0.25};
+    point_d p1p = {-1.0, -0.5};
+    point_d p2p = {-0.5, -0.5};
 
     while (running) {
 
         clear_screen(back_buffer, LIGHTGRAY);
 
-        //draw_triangle_fill(p0, p1, p2, RED, back_buffer);
-        //draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
-        //draw_triangle_transform(p0p, p1p, p2p, BLUE, back_buffer);
-
-        test_denormalization(p0, p1, p2);
+        draw_triangle_fill(p0, p1, p2, RED, back_buffer);
+        draw_triangle_fill(p0p, p1p, p2p, BLUE, back_buffer);
+        draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
 
         XPutImage(
             display,
