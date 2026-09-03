@@ -27,6 +27,12 @@ typedef struct {
     double_t y;
 } point_d;
 
+typedef struct {
+    double_t x;
+    double_t y;
+    double_t z;
+} point3_d;
+
 bool put_pixel(uint32_t x, uint32_t y, screen_buffer* buffer, pixel_data data);
 
 void draw_line_p(point_i p0, point_i p1, pixel_data p_data, screen_buffer* buffer);
@@ -34,6 +40,7 @@ void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_
 void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer);
 void draw_triangle_fill(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer);
 void draw_triangle_transform(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer);
-void test_denormalization(point_i p0, point_i p1, point_i p2);
+void draw_triangle_transform3(point3_d p0, point3_d p1, point3_d p2, pixel_data p_data, screen_buffer* buffer);
+void draw_cube(screen_buffer* buffer);
 
 #endif //__DRAW_H__

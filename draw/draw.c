@@ -12,72 +12,13 @@ double_t _convert_to_radians(double_t degrees) {
     return degrees * PI / 180.0;
 }
 
-point_d _normalize_point_coords(point_i p, uint16_t max_val_x, uint16_t max_val_y) {
-    point_d ret_point = {0};
-    ret_point.x = 2.0 * ((double_t)p.x / (double_t)max_val_x) - 1.0;
-    ret_point.y = 1.0 - 2.0 * ((double_t)p.y / (double_t)max_val_y);
-    return ret_point;
-}
-
 point_i _denormalize_point_coords(point_d p, uint16_t max_val_x, uint16_t max_val_y) {
     point_i ret_point = {0};
-    double_t aspect_ratio = (double_t)max_val_x / (double_t)max_val_y;
-
-    p.x /= aspect_ratio;
 
     ret_point.x = ((p.x + 1.0) / 2.0)  * max_val_x;
     ret_point.y = ((p.y - 1.0) / -2.0) * max_val_y;
 
     return ret_point;
-}
-
-void test_denormalization(point_i p0, point_i p1, point_i p2) {
-
-    double_t rot_angle = _convert_to_radians(45.0);
-
-    printf("Points before nomralization : \n");
-    printf("P0 : %d ; %d\n", p0.x, p0.y);
-    printf("P1 : %d ; %d\n", p1.x, p1.y);
-    printf("P2 : %d ; %d\n", p2.x, p2.y);
-
-    point_d p0n = _normalize_point_coords(p0, 800, 600);
-    point_d p1n = _normalize_point_coords(p1, 800, 600);
-    point_d p2n = _normalize_point_coords(p2, 800, 600);
-
-    point_d temp_0 = {0};
-    point_d temp_1 = {0};
-    point_d temp_2 = {0};
-
-    double_t rot_mat[4] = {0};
-
-    rot_mat[0] = cos(rot_angle);
-    rot_mat[1] = -(sin(rot_angle));
-    rot_mat[2] = sin(rot_angle);
-    rot_mat[3] = cos(rot_angle);
-    
-    temp_0.x = p0n.x * rot_mat[0] + p0n.y * rot_mat[1];
-    temp_0.y = p0n.x * rot_mat[2] + p0n.y * rot_mat[3];
-
-    temp_1.x = p1n.x * rot_mat[0] + p1n.y * rot_mat[1];
-    temp_1.y = p1n.x * rot_mat[2] + p1n.y * rot_mat[3];
-    
-    temp_2.x = p2n.x * rot_mat[0] + p2n.y * rot_mat[1];
-    temp_2.y = p2n.x * rot_mat[2] + p2n.y * rot_mat[3];
-
-    printf("Points after normalization (and rotation) : \n");
-    printf("P0 : %f ; %f\n", temp_0.x, temp_0.y);
-    printf("P1 : %f ; %f\n", temp_1.x, temp_1.y);
-    printf("P2 : %f ; %f\n", temp_2.x, temp_2.y);
-
-    point_i p0d = _denormalize_point_coords(temp_0, 800, 600);
-    point_i p1d = _denormalize_point_coords(temp_1, 800, 600);
-    point_i p2d = _denormalize_point_coords(temp_2, 800, 600);
-
-    printf("Points after denormalization (and rotation) : \n");
-    printf("P0 : %d ; %d\n", p0d.x, p0d.y);
-    printf("P1 : %d ; %d\n", p1d.x, p1d.y);
-    printf("P2 : %d ; %d\n", p2d.x, p2d.y);
-
 }
 
 list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1) {
@@ -197,11 +138,15 @@ void draw_line_p(point_i p0, point_i p1, pixel_data p_data, screen_buffer* buffe
     draw_line(p0.x, p0.y, p1.x, p1.y, p_data, buffer);
 }
 
-void draw_triangle_wireframe(point_i p0, point_i p1, point_i p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_wireframe(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer) {
 
-    draw_line_p(p0, p1, p_data, buffer);
-    draw_line_p(p1, p2, p_data, buffer);
-    draw_line_p(p0, p2, p_data, buffer);
+    point_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
+    point_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
+    point_i p2n = _denormalize_point_coords(p2, buffer->width, buffer->height);
+
+    draw_line_p(p0n, p1n, p_data, buffer);
+    draw_line_p(p1n, p2n, p_data, buffer);
+    draw_line_p(p0n, p2n, p_data, buffer);
 
 }
 
@@ -287,4 +232,28 @@ void draw_triangle_transform(point_d p0, point_d p1, point_d p2, pixel_data p_da
 
     draw_triangle_fill(temp_0, temp_1, temp_2, p_data, buffer);
 
+}
+
+point_d _project_point(point3_d p) {
+    point_d ret_point;
+
+    ret_point.x = p.x / p.z;
+    ret_point.y = p.y / p.z;
+
+    return ret_point;
+
+}
+
+void draw_triangle_transform3(point3_d p0, point3_d p1, point3_d p2, pixel_data p_data, screen_buffer* buffer) {
+
+    point_d proj_point0 = _project_point(p0);
+    point_d proj_point1 = _project_point(p1);
+    point_d proj_point2 = _project_point(p2);
+
+    draw_triangle_fill(proj_point0, proj_point1, proj_point2, p_data, buffer);
+
+}
+
+void draw_cube(screen_buffer* buffer) {
+    
 }

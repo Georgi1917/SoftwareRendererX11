@@ -17,7 +17,7 @@ void clear_screen(screen_buffer* buffer, pixel_data p_data);
 int main(void)
 {
 
-    screen_buffer* back_buffer = init_screen_buffer(800, 600);
+    screen_buffer* back_buffer = init_screen_buffer(800, 800);
     Display *display = XOpenDisplay(NULL);
 
     if (display == NULL) {
@@ -81,17 +81,22 @@ int main(void)
     point_d p1 = {-0.5, -0.5};
     point_d p2 = {0.5, -0.5};
 
-    point_d p0p = {-0.75, 0.25};
-    point_d p1p = {-1.0, -0.5};
-    point_d p2p = {-0.5, -0.5};
+    point3_d p0d = {-0.5, 0.5, 1.0};
+    point3_d p1d = {-1.0, -0.5, 1.0};
+    point3_d p2d = {0.0, -0.5, 1.0};
+
+    point3_d p0b = {-0.5, 0.5, 1.25};
+    point3_d p1b = {-1.0, -0.5, 1.25};
+    point3_d p2b = {0.0, -0.5, 1.25};
 
     while (running) {
 
         clear_screen(back_buffer, LIGHTGRAY);
 
-        draw_triangle_fill(p0, p1, p2, RED, back_buffer);
-        draw_triangle_fill(p0p, p1p, p2p, BLUE, back_buffer);
-        draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
+        // draw_triangle_fill(p0, p1, p2, RED, back_buffer);
+        // draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
+        draw_triangle_transform3(p0b, p1b, p2b, RED, back_buffer);
+        draw_triangle_transform3(p0d, p1d, p2d, BLUE, back_buffer);
 
         XPutImage(
             display,
