@@ -134,19 +134,19 @@ void draw_line(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, pixel_data p_
     }
 }
 
-void draw_line_p(point_i p0, point_i p1, pixel_data p_data, screen_buffer* buffer) {
-    draw_line(p0.x, p0.y, p1.x, p1.y, p_data, buffer);
+void draw_line_p(point_d p0, point_d p1, pixel_data p_data, screen_buffer* buffer) {
+
+    point_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
+    point_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
+
+    draw_line(p0n.x, p0n.y, p1n.x, p1n.y, p_data, buffer);
 }
 
 void draw_triangle_wireframe(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer) {
 
-    point_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
-    point_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
-    point_i p2n = _denormalize_point_coords(p2, buffer->width, buffer->height);
-
-    draw_line_p(p0n, p1n, p_data, buffer);
-    draw_line_p(p1n, p2n, p_data, buffer);
-    draw_line_p(p0n, p2n, p_data, buffer);
+    draw_line_p(p0, p1, p_data, buffer);
+    draw_line_p(p1, p2, p_data, buffer);
+    draw_line_p(p0, p2, p_data, buffer);
 
 }
 
@@ -244,6 +244,41 @@ point_d _project_point(point3_d p) {
 
 }
 
+point3_d _add_vectors(point3_d v, point3_d t) {
+    point3_d ret_point = {0};
+
+    ret_point.x = v.x + t.x;
+    ret_point.y = v.y + t.y;
+    ret_point.z = v.z + t.z;
+
+    return ret_point;
+
+}
+
+point3_d _rotate_vector_y(point3_d v, double_t angle) {
+
+    double_t rad_angle = _convert_to_radians(angle);
+    point3_d ret_point = {0};
+
+    double_t rot_matrix[9] = {0};
+    rot_matrix[0] = cos(rad_angle);
+    rot_matrix[1] = 0.0;
+    rot_matrix[2] = sin(rad_angle);
+    rot_matrix[3] = 0.0;
+    rot_matrix[4] = 1.0;
+    rot_matrix[5] = 0.0;
+    rot_matrix[6] = -sin(rad_angle);
+    rot_matrix[7] = 0.0;
+    rot_matrix[8] = cos(rad_angle);
+
+    ret_point.x = v.x * rot_matrix[0] + v.y * rot_matrix[1] + v.z * rot_matrix[2];
+    ret_point.y = v.x * rot_matrix[3] + v.y * rot_matrix[4] + v.z * rot_matrix[5];
+    ret_point.z = v.x * rot_matrix[6] + v.y * rot_matrix[7] + v.z * rot_matrix[8];
+
+    return ret_point;
+
+}
+
 void draw_triangle_transform3(point3_d p0, point3_d p1, point3_d p2, pixel_data p_data, screen_buffer* buffer) {
 
     point_d proj_point0 = _project_point(p0);
@@ -254,6 +289,40 @@ void draw_triangle_transform3(point3_d p0, point3_d p1, point3_d p2, pixel_data 
 
 }
 
-void draw_cube(screen_buffer* buffer) {
+void draw_cube(screen_buffer* buffer, float_t dt) {
     
+    static double_t angle = 0.0;
+
+    point3_d front_p0 = {-1.0, 1.0, 1.0};
+    point3_d front_p1 = {1.0, 1.0, 1.0};
+    point3_d front_p2 = {1.0, -1.0, 1.0};
+    point3_d front_p3 = {-1.0, -1.0, 1.0};
+
+    point3_d back_p0 = {-1.0, 1.0, -1.0};
+    point3_d back_p1 = {1.0, 1.0, -1.0};
+    point3_d back_p2 = {1.0, -1.0, -1.0};
+    point3_d back_p3 = {-1.0, -1.0, -1.0};
+
+    point_d proj_point_front0 = _project_point(_add_vectors(_rotate_vector_y(front_p0, angle), (point3_d){0.0, 0.0, 5.0}));
+    point_d proj_point_front1 = _project_point(_add_vectors(_rotate_vector_y(front_p1, angle), (point3_d){0.0, 0.0, 5.0}));
+    point_d proj_point_front2 = _project_point(_add_vectors(_rotate_vector_y(front_p2, angle), (point3_d){0.0, 0.0, 5.0}));
+    point_d proj_point_front3 = _project_point(_add_vectors(_rotate_vector_y(front_p3, angle), (point3_d){0.0, 0.0, 5.0}));
+
+    point_d proj_point_back0 = _project_point(_add_vectors(_rotate_vector_y(back_p0, angle), (point3_d){0.0, 0.0, 5.0}));
+    point_d proj_point_back1 = _project_point(_add_vectors(_rotate_vector_y(back_p1, angle), (point3_d){0.0, 0.0, 5.0}));
+    point_d proj_point_back2 = _project_point(_add_vectors(_rotate_vector_y(back_p2, angle), (point3_d){0.0, 0.0, 5.0}));
+    point_d proj_point_back3 = _project_point(_add_vectors(_rotate_vector_y(back_p3, angle), (point3_d){0.0, 0.0, 5.0}));
+
+    angle += dt * 5.0;
+
+    draw_triangle_wireframe(proj_point_back0, proj_point_back1, proj_point_back2, BLUE, buffer);
+    draw_triangle_wireframe(proj_point_back3, proj_point_back0, proj_point_back2, BLUE, buffer);
+    draw_triangle_wireframe(proj_point_front0, proj_point_front1, proj_point_front2, RED, buffer);
+    draw_triangle_wireframe(proj_point_front3, proj_point_front0, proj_point_front2, RED, buffer);
+
+    draw_line_p(proj_point_front0, proj_point_back0, BLUE, buffer);
+    draw_line_p(proj_point_front1, proj_point_back1, BLUE, buffer);
+    draw_line_p(proj_point_front2, proj_point_back2, BLUE, buffer);
+    draw_line_p(proj_point_front3, proj_point_back3, BLUE, buffer);
+
 }

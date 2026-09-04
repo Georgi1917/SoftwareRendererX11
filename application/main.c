@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <math.h>
 #include <stdlib.h>
+#include <time.h>
 
 #include "draw.h"
 #include "colors.h"
@@ -89,14 +90,18 @@ int main(void)
     point3_d p1b = {-1.0, -0.5, 1.25};
     point3_d p2b = {0.0, -0.5, 1.25};
 
+    float_t dt = 1.0f / 60.0f;
+
     while (running) {
 
         clear_screen(back_buffer, LIGHTGRAY);
 
         // draw_triangle_fill(p0, p1, p2, RED, back_buffer);
         // draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
-        draw_triangle_transform3(p0b, p1b, p2b, RED, back_buffer);
-        draw_triangle_transform3(p0d, p1d, p2d, BLUE, back_buffer);
+        // draw_triangle_transform3(p0b, p1b, p2b, RED, back_buffer);
+        // draw_triangle_transform3(p0d, p1d, p2d, BLUE, back_buffer);
+
+        draw_cube(back_buffer, dt);
 
         XPutImage(
             display,
