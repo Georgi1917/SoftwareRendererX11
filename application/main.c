@@ -57,7 +57,7 @@ int main(void)
         DefaultDepth(display, screen),
         ZPixmap,
         0,
-        back_buffer->mem,
+        (char *)back_buffer->mem,
         back_buffer->width,
         back_buffer->height,
         32,
@@ -78,17 +78,17 @@ int main(void)
     int running = 1;
     XEvent event;
 
-    point_d p0 = {0.0, 0.5};
-    point_d p1 = {-0.5, -0.5};
-    point_d p2 = {0.5, -0.5};
+    // point_d p0 = {0.0, 0.5};
+    // point_d p1 = {-0.5, -0.5};
+    // point_d p2 = {0.5, -0.5};
 
-    point3_d p0d = {-0.5, 0.5, 1.0};
-    point3_d p1d = {-1.0, -0.5, 1.0};
-    point3_d p2d = {0.0, -0.5, 1.0};
+    // point3_d p0d = {-0.5, 0.5, 1.0};
+    // point3_d p1d = {-1.0, -0.5, 1.0};
+    // point3_d p2d = {0.0, -0.5, 1.0};
 
-    point3_d p0b = {-0.5, 0.5, 1.25};
-    point3_d p1b = {-1.0, -0.5, 1.25};
-    point3_d p2b = {0.0, -0.5, 1.25};
+    // point3_d p0b = {-0.5, 0.5, 1.25};
+    // point3_d p1b = {-1.0, -0.5, 1.25};
+    // point3_d p2b = {0.0, -0.5, 1.25};
 
     float_t dt = 1.0f / 60.0f;
 
