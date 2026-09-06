@@ -78,28 +78,11 @@ int main(void)
     int running = 1;
     XEvent event;
 
-    // point_d p0 = {0.0, 0.5};
-    // point_d p1 = {-0.5, -0.5};
-    // point_d p2 = {0.5, -0.5};
-
-    // point3_d p0d = {-0.5, 0.5, 1.0};
-    // point3_d p1d = {-1.0, -0.5, 1.0};
-    // point3_d p2d = {0.0, -0.5, 1.0};
-
-    // point3_d p0b = {-0.5, 0.5, 1.25};
-    // point3_d p1b = {-1.0, -0.5, 1.25};
-    // point3_d p2b = {0.0, -0.5, 1.25};
-
     float_t dt = 1.0f / 60.0f;
 
     while (running) {
 
         clear_screen(back_buffer, LIGHTGRAY);
-
-        // draw_triangle_fill(p0, p1, p2, RED, back_buffer);
-        // draw_triangle_transform(p0, p1, p2, BLUE, back_buffer);
-        // draw_triangle_transform3(p0b, p1b, p2b, RED, back_buffer);
-        // draw_triangle_transform3(p0d, p1d, p2d, BLUE, back_buffer);
 
         draw_cube(back_buffer, dt);
 
