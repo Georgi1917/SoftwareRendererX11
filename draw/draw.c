@@ -12,8 +12,8 @@ double_t _convert_to_radians(double_t degrees) {
     return degrees * PI / 180.0;
 }
 
-point_i _denormalize_point_coords(point_d p, uint16_t max_val_x, uint16_t max_val_y) {
-    point_i ret_point = {0};
+vec2_i _denormalize_point_coords(vec2_d p, uint16_t max_val_x, uint16_t max_val_y) {
+    vec2_i ret_point = {0};
 
     ret_point.x = ((p.x + 1.0) / 2.0)  * max_val_x;
     ret_point.y = ((p.y - 1.0) / -2.0) * max_val_y;
@@ -101,9 +101,9 @@ void _draw_line_low(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p
     }
 }
 
-void _swap_points(point_i *a, point_i *b) {
+void _swap_points(vec2_i*a, vec2_i *b) {
 
-    point_i temp = *a;
+    vec2_i temp = *a;
     *a = *b;
     *b = temp;
 
@@ -135,15 +135,15 @@ void draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data
     }
 }
 
-void draw_line_p(point_d p0, point_d p1, pixel_data p_data, screen_buffer* buffer) {
+void draw_line_p(vec2_d p0, vec2_d p1, pixel_data p_data, screen_buffer* buffer) {
 
-    point_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
-    point_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
+    vec2_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
+    vec2_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
 
     draw_line(p0n.x, p0n.y, p1n.x, p1n.y, p_data, buffer);
 }
 
-void draw_triangle_wireframe(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_wireframe(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, screen_buffer* buffer) {
 
     draw_line_p(p0, p1, p_data, buffer);
     draw_line_p(p1, p2, p_data, buffer);
@@ -151,11 +151,11 @@ void draw_triangle_wireframe(point_d p0, point_d p1, point_d p2, pixel_data p_da
 
 }
 
-void draw_triangle_fill(point_d p0, point_d p1, point_d p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, screen_buffer* buffer) {
 
-    point_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
-    point_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
-    point_i p2n = _denormalize_point_coords(p2, buffer->width, buffer->height);
+    vec2_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
+    vec2_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
+    vec2_i p2n = _denormalize_point_coords(p2, buffer->width, buffer->height);
 
     if (p1n.y < p0n.y) { _swap_points(&p1n, &p0n); }
     if (p2n.y < p0n.y) { _swap_points(&p2n, &p0n); }
@@ -204,8 +204,8 @@ void draw_triangle_fill(point_d p0, point_d p1, point_d p2, pixel_data p_data, s
 
 }
 
-point_d _project_point(point3_d p) {
-    point_d ret_point;
+vec2_d _project_point(vec3_d p) {
+    vec2_d ret_point;
 
     ret_point.x = p.x / p.z;
     ret_point.y = p.y / p.z;
@@ -214,8 +214,8 @@ point_d _project_point(point3_d p) {
 
 }
 
-point3_d _add_vectors(point3_d v, point3_d t) {
-    point3_d ret_point = {0};
+vec3_d _add_vectors(vec3_d v, vec3_d t) {
+    vec3_d ret_point = {0};
 
     ret_point.x = v.x + t.x;
     ret_point.y = v.y + t.y;
@@ -225,25 +225,36 @@ point3_d _add_vectors(point3_d v, point3_d t) {
 
 }
 
-point3_d _rotate_vector_y(point3_d v, double_t angle) {
+vec3_d _rotate_vector_y(vec3_d v, double_t angle) {
 
     double_t rad_angle = _convert_to_radians(angle);
-    point3_d ret_point = {0};
+    vec3_d ret_point = {0};
 
-    double_t rot_matrix[9] = {0};
-    rot_matrix[0] = cos(rad_angle);
-    rot_matrix[1] = 0.0;
-    rot_matrix[2] = sin(rad_angle);
-    rot_matrix[3] = 0.0;
-    rot_matrix[4] = 1.0;
-    rot_matrix[5] = 0.0;
-    rot_matrix[6] = -sin(rad_angle);
-    rot_matrix[7] = 0.0;
-    rot_matrix[8] = cos(rad_angle);
+    // double_t rot_matrix[9] = {0};
+    // rot_matrix[0] = cos(rad_angle);
+    // rot_matrix[1] = 0.0;
+    // rot_matrix[2] = sin(rad_angle);
+    // rot_matrix[3] = 0.0;
+    // rot_matrix[4] = 1.0;
+    // rot_matrix[5] = 0.0;
+    // rot_matrix[6] = -sin(rad_angle);
+    // rot_matrix[7] = 0.0;
+    // rot_matrix[8] = cos(rad_angle);
 
-    ret_point.x = v.x * rot_matrix[0] + v.y * rot_matrix[1] + v.z * rot_matrix[2];
-    ret_point.y = v.x * rot_matrix[3] + v.y * rot_matrix[4] + v.z * rot_matrix[5];
-    ret_point.z = v.x * rot_matrix[6] + v.y * rot_matrix[7] + v.z * rot_matrix[8];
+    mat3x3_d rot_matrix = {0};
+    rot_matrix.m[0][0] = cos(rad_angle);
+    rot_matrix.m[0][1] = 0.0;
+    rot_matrix.m[0][2] = sin(rad_angle);
+    rot_matrix.m[1][0] = 0.0;
+    rot_matrix.m[1][1] = 1.0;
+    rot_matrix.m[1][2] = 0.0;
+    rot_matrix.m[2][0] = -sin(rad_angle);
+    rot_matrix.m[2][1] = 0.0;
+    rot_matrix.m[2][2] = cos(rad_angle);
+
+    ret_point.x = v.x * rot_matrix.m[0][0] + v.y * rot_matrix.m[0][1] + v.z * rot_matrix.m[0][2];
+    ret_point.y = v.x * rot_matrix.m[1][0] + v.y * rot_matrix.m[1][1] + v.z * rot_matrix.m[1][2];
+    ret_point.z = v.x * rot_matrix.m[2][0] + v.y * rot_matrix.m[2][1] + v.z * rot_matrix.m[2][2];
 
     return ret_point;
 
@@ -253,27 +264,27 @@ void draw_cube(screen_buffer* buffer, float_t dt) {
     
     static double_t angle = 0.0;
 
-    point3_d front_p0 = {-1.0, 1.0, 1.0};
-    point3_d front_p1 = {1.0, 1.0, 1.0};
-    point3_d front_p2 = {1.0, -1.0, 1.0};
-    point3_d front_p3 = {-1.0, -1.0, 1.0};
+    vec3_d front_p0 = {-1.0, 1.0, 1.0};
+    vec3_d front_p1 = {1.0, 1.0, 1.0};
+    vec3_d front_p2 = {1.0, -1.0, 1.0};
+    vec3_d front_p3 = {-1.0, -1.0, 1.0};
 
-    point3_d back_p0 = {-1.0, 1.0, -1.0};
-    point3_d back_p1 = {1.0, 1.0, -1.0};
-    point3_d back_p2 = {1.0, -1.0, -1.0};
-    point3_d back_p3 = {-1.0, -1.0, -1.0};
+    vec3_d back_p0 = {-1.0, 1.0, -1.0};
+    vec3_d back_p1 = {1.0, 1.0, -1.0};
+    vec3_d back_p2 = {1.0, -1.0, -1.0};
+    vec3_d back_p3 = {-1.0, -1.0, -1.0};
 
-    point3_d trans = {1.5, -1.5, 5.0};
+    vec3_d trans = {1.5, -1.5, 5.0};
 
-    point_d proj_point_front0 = _project_point(_add_vectors(_rotate_vector_y(front_p0, angle), trans));
-    point_d proj_point_front1 = _project_point(_add_vectors(_rotate_vector_y(front_p1, angle), trans));
-    point_d proj_point_front2 = _project_point(_add_vectors(_rotate_vector_y(front_p2, angle), trans));
-    point_d proj_point_front3 = _project_point(_add_vectors(_rotate_vector_y(front_p3, angle), trans));
+    vec2_d proj_point_front0 = _project_point(_add_vectors(_rotate_vector_y(front_p0, angle), trans));
+    vec2_d proj_point_front1 = _project_point(_add_vectors(_rotate_vector_y(front_p1, angle), trans));
+    vec2_d proj_point_front2 = _project_point(_add_vectors(_rotate_vector_y(front_p2, angle), trans));
+    vec2_d proj_point_front3 = _project_point(_add_vectors(_rotate_vector_y(front_p3, angle), trans));
 
-    point_d proj_point_back0 = _project_point(_add_vectors(_rotate_vector_y(back_p0, angle), trans));
-    point_d proj_point_back1 = _project_point(_add_vectors(_rotate_vector_y(back_p1, angle), trans));
-    point_d proj_point_back2 = _project_point(_add_vectors(_rotate_vector_y(back_p2, angle), trans));
-    point_d proj_point_back3 = _project_point(_add_vectors(_rotate_vector_y(back_p3, angle), trans));
+    vec2_d proj_point_back0 = _project_point(_add_vectors(_rotate_vector_y(back_p0, angle), trans));
+    vec2_d proj_point_back1 = _project_point(_add_vectors(_rotate_vector_y(back_p1, angle), trans));
+    vec2_d proj_point_back2 = _project_point(_add_vectors(_rotate_vector_y(back_p2, angle), trans));
+    vec2_d proj_point_back3 = _project_point(_add_vectors(_rotate_vector_y(back_p3, angle), trans));
 
     angle += dt * 5.0;
 

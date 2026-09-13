@@ -6,6 +6,7 @@ libx_external_dp = compiler_c.find_library('X11')
 libm_external_dp = compiler_c.find_library('m')
 
 sub_dirs = [
+    'h_math',
     'struct_utils',
     'draw',
     'application'
