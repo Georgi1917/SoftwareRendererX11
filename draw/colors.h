@@ -27,6 +27,12 @@
 
 #define WHITE      (pixel_data){ 255, 255, 255 }   // White
 #define BLACK      (pixel_data){ 0, 0, 0 }         // Black
-#define MAGENTA    (pixel_data){ 255, 0, 255 } 
+#define MAGENTA    (pixel_data){ 255, 0, 255 }
+
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} pixel_data;
 
 #endif //__COLORS_H__

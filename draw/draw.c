@@ -230,17 +230,6 @@ vec3_d _rotate_vector_y(vec3_d v, double_t angle) {
     double_t rad_angle = _convert_to_radians(angle);
     vec3_d ret_point = {0};
 
-    // double_t rot_matrix[9] = {0};
-    // rot_matrix[0] = cos(rad_angle);
-    // rot_matrix[1] = 0.0;
-    // rot_matrix[2] = sin(rad_angle);
-    // rot_matrix[3] = 0.0;
-    // rot_matrix[4] = 1.0;
-    // rot_matrix[5] = 0.0;
-    // rot_matrix[6] = -sin(rad_angle);
-    // rot_matrix[7] = 0.0;
-    // rot_matrix[8] = cos(rad_angle);
-
     mat3x3_d rot_matrix = {0};
     rot_matrix.m[0][0] = cos(rad_angle);
     rot_matrix.m[0][1] = 0.0;

@@ -8,12 +8,6 @@
 #include "colors.h"
 #include "h_math.h"
 
-typedef struct {
-    uint8_t r;
-    uint8_t g;
-    uint8_t b;
-} pixel_data;
-
 bool put_pixel(int16_t x, int16_t y, screen_buffer* buffer, pixel_data data);
 
 void draw_line_p(vec2_d p0, vec2_d p1, pixel_data p_data, screen_buffer* buffer);
