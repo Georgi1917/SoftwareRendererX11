@@ -5,9 +5,9 @@
 #include <math.h>
 
 typedef struct {
-    uint16_t size;
-    uint16_t count;
     float_t* data;
+    uint16_t size;
+    int16_t count;
 } list_f;
 
 list_f* init_list();

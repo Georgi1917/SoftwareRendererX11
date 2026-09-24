@@ -15,7 +15,14 @@ list_f* init_list() {
 void append_el(list_f* list, float_t el) {
     if (list->size <= list->count) {
         list->size *= 2;
-        list->data = realloc(list->data, sizeof(float_t) * list->size);
+        float_t* temp = realloc(list->data, sizeof(float_t) * list->size);
+
+        if (!temp) {
+            printf("Error while reallocating memory!\n");
+            return;
+        }
+
+        list->data = temp;
     }
 
     list->data[list->count++] = el;
@@ -23,7 +30,12 @@ void append_el(list_f* list, float_t el) {
 }
 
 void pop_back(list_f* list) {
-    list->data[list->count--] = 0;
+    if (list->count >= 0) {
+        list->count--;
+    }
+    else {
+        printf("No list lmao\n");
+    }
 }
 
 void free_list(list_f* list) {

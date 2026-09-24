@@ -13,8 +13,6 @@
 #include "colors.h"
 #include "screen_buffer.h"
 
-void clear_screen(screen_buffer* buffer, pixel_data p_data);
-
 int main(void)
 {
 
@@ -82,7 +80,7 @@ int main(void)
 
     while (running) {
 
-        clear_screen(back_buffer, LIGHTGRAY);
+        clear_buffer(BLACK, back_buffer);
 
         draw_cube(back_buffer, dt);
 
@@ -137,11 +135,3 @@ int main(void)
     return 0;
 }
 
-void clear_screen(screen_buffer* buffer, pixel_data p_data) {
-
-    for (uint16_t y = 0; y < buffer->height; y++) {
-        for (uint16_t x = 0; x < buffer->width; x++) {
-            put_pixel(x, y, buffer, p_data);
-        }
-    }
-}
