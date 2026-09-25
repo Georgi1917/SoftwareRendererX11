@@ -8,10 +8,6 @@
 
 #define PI 3.1415926535
 
-double_t _convert_to_radians(double_t degrees) {
-    return degrees * PI / 180.0;
-}
-
 vec2_i _denormalize_point_coords(vec2_d p, uint16_t max_val_x, uint16_t max_val_y) {
     vec2_i ret_point = {0};
 
@@ -21,7 +17,7 @@ vec2_i _denormalize_point_coords(vec2_d p, uint16_t max_val_x, uint16_t max_val_
     return ret_point;
 }
 
-list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1) {
+list_f* _linear_interpolation(int16_t i0, int16_t d0, int16_t i1, int16_t d1) {
 
     list_f* values = init_list();
 
@@ -33,7 +29,7 @@ list_f* _linear_interpolation(uint16_t i0, uint16_t d0, uint16_t i1, uint16_t d1
     float_t a = (float_t)(d1 - d0) / (float_t)(i1 - i0);
     float_t d = (float_t)d0;
 
-    for (uint16_t i = i0; i <= i1; i++) {
+    for (int16_t i = i0; i <= i1; i++) {
         append_el(values, d);
         d = d + a;
     }
@@ -181,8 +177,8 @@ void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, scre
 
     if (x02->data[mid] < x012->data[mid]) {
 
-        for (uint16_t y = p0n.y; y < p2n.y; y++) {
-            for (uint16_t x = (uint16_t)x02->data[y - p0n.y]; x < x012->data[y - p0n.y]; x++) {
+        for (int16_t y = p0n.y; y < p2n.y; y++) {
+            for (int16_t x = (int16_t)x02->data[y - p0n.y]; x < x012->data[y - p0n.y]; x++) {
                 put_pixel(x, y, buffer, p_data);
             }
         }
@@ -190,8 +186,8 @@ void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, scre
     }
     else {
 
-        for (uint16_t y = p0n.y; y < p2n.y; y++) {
-            for (uint16_t x = (uint16_t)x012->data[y - p0n.y]; x < x02->data[y - p0n.y]; x++) {
+        for (int16_t y = p0n.y; y < p2n.y; y++) {
+            for (int16_t x = (int16_t)x012->data[y - p0n.y]; x < x02->data[y - p0n.y]; x++) {
                 put_pixel(x, y, buffer, p_data);
             }
         }
@@ -204,58 +200,9 @@ void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, scre
 
 }
 
-vec3_d _calculate_normal(vec3_d a, vec3_d b, vec3_d c) {
-    vec3_d normal;
-    vec3_d line1, line2;
-
-    line1.x = b.x - a.x;
-    line1.y = b.y - a.y;
-    line1.z = b.z - a.z;
-
-    line2.x = c.x - a.x;
-    line2.y = c.y - a.y;
-    line2.z = c.z - a.z;
-
-    normal.x = line1.y * line2.z - line1.z * line2.y;
-    normal.y = line1.z * line2.x - line1.x * line2.z;
-    normal.z = line1.x * line2.y - line1.y * line2.x;
-
-    double_t len = sqrtf(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-    normal.x /= len;
-    normal.y /= len;
-    normal.z /= len;
-
-    return normal;
-}
-
-double_t _calculate_dot_product(vec3_d a, vec3_d b) {
-    return (a.x * b.x + a.y * b.y + a.z * b.z);
-}
-
-vec2_d _project_point(vec3_d p) {
-    vec2_d ret_point;
-
-    ret_point.x = p.x / p.z;
-    ret_point.y = p.y / p.z;
-
-    return ret_point;
-
-}
-
-vec3_d _add_vectors(vec3_d v, vec3_d t) {
-    vec3_d ret_point = {0};
-
-    ret_point.x = v.x + t.x;
-    ret_point.y = v.y + t.y;
-    ret_point.z = v.z + t.z;
-
-    return ret_point;
-
-}
-
 vec3_d _rotate_vector_y(vec3_d v, double_t angle) {
 
-    double_t rad_angle = _convert_to_radians(angle);
+    double_t rad_angle = convert_to_radians(angle);
     vec3_d ret_point = {0};
 
     mat3x3_d rot_matrix = {0};
@@ -285,7 +232,7 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, float_t dt) {
+void draw_cube(screen_buffer* buffer, float_t dt, vec3_d trans) {
     
     static double_t angle = 0.0;
     triangle_d tri[12];
@@ -327,12 +274,12 @@ void draw_cube(screen_buffer* buffer, float_t dt) {
     tri[6].p[0] = (vec3_d){-1.0, -1.0, -1.0};
     tri[6].p[1] = (vec3_d){ 1.0, -1.0,  1.0};
     tri[6].p[2] = (vec3_d){ 1.0, -1.0, -1.0};
-    tri[6].color = DARKBROWN;
+    tri[6].color = WHITE;
 
     tri[7].p[0] = (vec3_d){-1.0, -1.0, -1.0};
     tri[7].p[1] = (vec3_d){-1.0, -1.0,  1.0};
     tri[7].p[2] = (vec3_d){ 1.0, -1.0,  1.0};
-    tri[7].color = DARKBROWN;
+    tri[7].color = WHITE;
 
     /* Right (+X) */
     tri[8].p[0] = (vec3_d){ 1.0,  1.0,  1.0};
@@ -356,17 +303,7 @@ void draw_cube(screen_buffer* buffer, float_t dt) {
     tri[11].p[2] = (vec3_d){-1.0, -1.0, -1.0};
     tri[11].color = GREEN;
 
-    vec3_d front_p0 = {-1.0, 1.0, 1.0};
-    vec3_d front_p1 = {1.0, 1.0, 1.0};
-    vec3_d front_p2 = {1.0, -1.0, 1.0};
-    vec3_d front_p3 = {-1.0, -1.0, 1.0};
-
-    vec3_d back_p0 = {-1.0, 1.0, -1.0};
-    vec3_d back_p1 = {1.0, 1.0, -1.0};
-    vec3_d back_p2 = {1.0, -1.0, -1.0};
-    vec3_d back_p3 = {-1.0, -1.0, -1.0};
-
-    vec3_d trans = {1.5, 1.5, 5.0};
+    //vec3_d trans = {1.5, 1.5, 5.0};
     vec3_d camera = {0.0, 0.0, 0.0};
 
     for (int i = 0; i < 12; i++) {
@@ -374,29 +311,40 @@ void draw_cube(screen_buffer* buffer, float_t dt) {
         vec3_d b = tri[i].p[1];
         vec3_d c = tri[i].p[2];
 
-        vec3_d trans_point_a = _add_vectors(_rotate_vector_y(a, angle), trans);
-        vec3_d trans_point_b = _add_vectors(_rotate_vector_y(b, angle), trans);
-        vec3_d trans_point_c = _add_vectors(_rotate_vector_y(c, angle), trans);
+        vec3_d trans_point_a = add_vectors(_rotate_vector_y(a, angle), trans);
+        vec3_d trans_point_b = add_vectors(_rotate_vector_y(b, angle), trans);
+        vec3_d trans_point_c = add_vectors(_rotate_vector_y(c, angle), trans);
 
-        vec3_d normal = _calculate_normal(trans_point_a, trans_point_b, trans_point_c);
+        vec3_d normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
         vec3_d cam_vec;
         cam_vec.x = trans_point_a.x - camera.x;
         cam_vec.y = trans_point_a.y - camera.y;
         cam_vec.z = trans_point_a.z - camera.z;
 
-        double_t dot = _calculate_dot_product(normal, cam_vec);
+        cam_vec = normalize(cam_vec);
+
+        double_t dot = calculate_dot_product(normal, cam_vec);
 
         if (dot > 0.0) {
-            vec2_d proj_point_a = _project_point(trans_point_a);
-            vec2_d proj_point_b = _project_point(trans_point_b);
-            vec2_d proj_point_c = _project_point(trans_point_c);
+            vec2_d proj_point_a = project_point(trans_point_a);
+            vec2_d proj_point_b = project_point(trans_point_b);
+            vec2_d proj_point_c = project_point(trans_point_c);
 
-            draw_triangle_fill(proj_point_a, proj_point_b, proj_point_c, tri[i].color, buffer);
+            // if (dot > 1.0) {
+            //     dot = 1.0;
+            // }
+
+            pixel_data new_col = {0};
+            new_col.r = (double_t)tri[i].color.r * dot;
+            new_col.g = (double_t)tri[i].color.g * dot;
+            new_col.b = (double_t)tri[i].color.b * dot;
+
+            draw_triangle_fill(proj_point_a, proj_point_b, proj_point_c, new_col, buffer);
         }
 
     }
 
-    angle += dt * 5.0;
+    angle += dt * 10.0;
 
 }

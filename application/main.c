@@ -80,9 +80,10 @@ int main(void)
 
     while (running) {
 
-        clear_buffer(BLACK, back_buffer);
+        clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt);
+        draw_cube(back_buffer, dt, (vec3_d){1.5, 1.5, 5.0});
+        draw_cube(back_buffer, dt, (vec3_d){-3.5, -1.5, 5.0});
 
         XPutImage(
             display,

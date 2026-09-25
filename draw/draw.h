@@ -21,6 +21,6 @@ void draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data
 void draw_triangle_wireframe(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, screen_buffer* buffer);
 void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, screen_buffer* buffer);
 
-void draw_cube(screen_buffer* buffer, float_t dt);
+void draw_cube(screen_buffer* buffer, float_t dt, vec3_d trans);
 
 #endif //__DRAW_H__
