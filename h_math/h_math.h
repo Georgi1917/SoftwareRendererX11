@@ -23,6 +23,10 @@ typedef struct {
 } vec3_f;
 
 typedef struct {
+    float_t x, y, z, w;
+} vec4_f;
+
+typedef struct {
     int16_t x, y;
 } vec2_i;
 
@@ -31,23 +35,27 @@ typedef struct {
 } vec3_i;
 
 typedef struct {
-    double_t m[2][2];
-} mat2x2_d;
+    float_t m[2][2];
+} mat2x2_f;
 
 typedef struct {
-    double_t m[3][3];
-} mat3x3_d;
+    float_t m[3][3];
+} mat3x3_f;
 
 typedef struct {
-    double_t m[4][4];
-} mat4x4_d;
+    float_t m[4][4];
+} mat4x4_f;
 
-double_t convert_to_radians(double_t degrees);
-vec3_d calculate_normal(vec3_d a, vec3_d b, vec3_d c);
-double_t calculate_dot_product(vec3_d a, vec3_d b);
+float_t convert_to_radians(float_t degrees);
+float_t calculate_dot_product(vec3_f a, vec3_f b);
+vec3_f to_cartesian_coords(vec4_f vec);
+vec3_f calculate_normal(vec3_f a, vec3_f b, vec3_f c);
 
-vec3_d normalize(vec3_d vec);
-vec3_d add_vectors(vec3_d a, vec3_d b);
-vec2_d project_point(vec3_d p);
+vec3_f normalize(vec3_f vec);
+vec3_f add_vectors(vec3_f a, vec3_f b);
+vec2_f project_point(vec3_f p);
+
+mat4x4_f perspective(float_t fov_rad, float_t aspect, float_t z_near, float_t z_far);
+vec4_f multiply_vec4_mat4(vec4_f vec, mat4x4_f mat);
 
 #endif

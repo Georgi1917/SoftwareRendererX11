@@ -8,7 +8,7 @@
 
 #define PI 3.1415926535
 
-vec2_i _denormalize_point_coords(vec2_d p, uint16_t max_val_x, uint16_t max_val_y) {
+vec2_i _denormalize_point_coords(vec2_f p, uint16_t max_val_x, uint16_t max_val_y) {
     vec2_i ret_point = {0};
 
     ret_point.x = ((p.x + 1.0) / 2.0)  * max_val_x;
@@ -131,7 +131,7 @@ void draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data
     }
 }
 
-void draw_line_p(vec2_d p0, vec2_d p1, pixel_data p_data, screen_buffer* buffer) {
+void draw_line_p(vec2_f p0, vec2_f p1, pixel_data p_data, screen_buffer* buffer) {
 
     vec2_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
     vec2_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
@@ -139,7 +139,7 @@ void draw_line_p(vec2_d p0, vec2_d p1, pixel_data p_data, screen_buffer* buffer)
     draw_line(p0n.x, p0n.y, p1n.x, p1n.y, p_data, buffer);
 }
 
-void draw_triangle_wireframe(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_wireframe(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, screen_buffer* buffer) {
 
     draw_line_p(p0, p1, p_data, buffer);
     draw_line_p(p1, p2, p_data, buffer);
@@ -147,7 +147,7 @@ void draw_triangle_wireframe(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data,
 
 }
 
-void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, screen_buffer* buffer) {
+void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, screen_buffer* buffer) {
 
     vec2_i p0n = _denormalize_point_coords(p0, buffer->width, buffer->height);
     vec2_i p1n = _denormalize_point_coords(p1, buffer->width, buffer->height);
@@ -200,21 +200,21 @@ void draw_triangle_fill(vec2_d p0, vec2_d p1, vec2_d p2, pixel_data p_data, scre
 
 }
 
-vec3_d _rotate_vector_y(vec3_d v, double_t angle) {
+vec3_f _rotate_vector_y(vec3_f v, float_t angle) {
 
-    double_t rad_angle = convert_to_radians(angle);
-    vec3_d ret_point = {0};
+    float_t rad_angle = convert_to_radians(angle);
+    vec3_f ret_point = {0};
 
-    mat3x3_d rot_matrix = {0};
-    rot_matrix.m[0][0] = cos(rad_angle);
-    rot_matrix.m[0][1] = 0.0;
-    rot_matrix.m[0][2] = sin(rad_angle);
-    rot_matrix.m[1][0] = 0.0;
-    rot_matrix.m[1][1] = 1.0;
-    rot_matrix.m[1][2] = 0.0;
-    rot_matrix.m[2][0] = -sin(rad_angle);
-    rot_matrix.m[2][1] = 0.0;
-    rot_matrix.m[2][2] = cos(rad_angle);
+    mat3x3_f rot_matrix = {0};
+    rot_matrix.m[0][0] = cosf(rad_angle);
+    rot_matrix.m[0][1] = 0.0f;
+    rot_matrix.m[0][2] = sinf(rad_angle);
+    rot_matrix.m[1][0] = 0.0f;
+    rot_matrix.m[1][1] = 1.0f;
+    rot_matrix.m[1][2] = 0.0f;
+    rot_matrix.m[2][0] = -sinf(rad_angle);
+    rot_matrix.m[2][1] = 0.0f;
+    rot_matrix.m[2][2] = cosf(rad_angle);
 
     ret_point.x = v.x * rot_matrix.m[0][0] + v.y * rot_matrix.m[0][1] + v.z * rot_matrix.m[0][2];
     ret_point.y = v.x * rot_matrix.m[1][0] + v.y * rot_matrix.m[1][1] + v.z * rot_matrix.m[1][2];
@@ -232,115 +232,117 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, float_t dt, vec3_d trans) {
+void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj) {
     
-    static double_t angle = 0.0;
+    static float_t angle = 0.0;
     triangle_d tri[12];
 
     // Front
-    tri[0].p[0] = (vec3_d){-1.0,  1.0,  1.0};
-    tri[0].p[1] = (vec3_d){ 1.0,  1.0,  1.0};
-    tri[0].p[2] = (vec3_d){ 1.0, -1.0,  1.0};
+    tri[0].p[0] = (vec3_f){-1.0,  1.0,  1.0};
+    tri[0].p[1] = (vec3_f){ 1.0,  1.0,  1.0};
+    tri[0].p[2] = (vec3_f){ 1.0, -1.0,  1.0};
     tri[0].color = BLUE;
 
-    tri[1].p[0] = (vec3_d){-1.0,  1.0,  1.0};
-    tri[1].p[1] = (vec3_d){ 1.0, -1.0,  1.0};
-    tri[1].p[2] = (vec3_d){-1.0, -1.0,  1.0};
+    tri[1].p[0] = (vec3_f){-1.0,  1.0,  1.0};
+    tri[1].p[1] = (vec3_f){ 1.0, -1.0,  1.0};
+    tri[1].p[2] = (vec3_f){-1.0, -1.0,  1.0};
     tri[1].color = BLUE;
 
     /* Back (-Z) */
-    tri[2].p[0] = (vec3_d){ 1.0,  1.0, -1.0};
-    tri[2].p[1] = (vec3_d){-1.0,  1.0, -1.0};
-    tri[2].p[2] = (vec3_d){-1.0, -1.0, -1.0};
+    tri[2].p[0] = (vec3_f){ 1.0,  1.0, -1.0};
+    tri[2].p[1] = (vec3_f){-1.0,  1.0, -1.0};
+    tri[2].p[2] = (vec3_f){-1.0, -1.0, -1.0};
     tri[2].color = RED;
 
-    tri[3].p[0] = (vec3_d){ 1.0,  1.0, -1.0};
-    tri[3].p[1] = (vec3_d){-1.0, -1.0, -1.0};
-    tri[3].p[2] = (vec3_d){ 1.0, -1.0, -1.0};
+    tri[3].p[0] = (vec3_f){ 1.0,  1.0, -1.0};
+    tri[3].p[1] = (vec3_f){-1.0, -1.0, -1.0};
+    tri[3].p[2] = (vec3_f){ 1.0, -1.0, -1.0};
     tri[3].color = RED;
 
     /* Top (+Y) */
-    tri[4].p[0] = (vec3_d){-1.0,  1.0, -1.0};
-    tri[4].p[1] = (vec3_d){ 1.0,  1.0, -1.0};
-    tri[4].p[2] = (vec3_d){ 1.0,  1.0,  1.0};
+    tri[4].p[0] = (vec3_f){-1.0,  1.0, -1.0};
+    tri[4].p[1] = (vec3_f){ 1.0,  1.0, -1.0};
+    tri[4].p[2] = (vec3_f){ 1.0,  1.0,  1.0};
     tri[4].color = PURPLE;
 
-    tri[5].p[0] = (vec3_d){-1.0,  1.0, -1.0};
-    tri[5].p[1] = (vec3_d){ 1.0,  1.0,  1.0};
-    tri[5].p[2] = (vec3_d){-1.0,  1.0,  1.0};
+    tri[5].p[0] = (vec3_f){-1.0,  1.0, -1.0};
+    tri[5].p[1] = (vec3_f){ 1.0,  1.0,  1.0};
+    tri[5].p[2] = (vec3_f){-1.0,  1.0,  1.0};
     tri[5].color = PURPLE;
 
     /* Bottom (-Y) */
-    tri[6].p[0] = (vec3_d){-1.0, -1.0, -1.0};
-    tri[6].p[1] = (vec3_d){ 1.0, -1.0,  1.0};
-    tri[6].p[2] = (vec3_d){ 1.0, -1.0, -1.0};
+    tri[6].p[0] = (vec3_f){-1.0, -1.0, -1.0};
+    tri[6].p[1] = (vec3_f){ 1.0, -1.0,  1.0};
+    tri[6].p[2] = (vec3_f){ 1.0, -1.0, -1.0};
     tri[6].color = WHITE;
 
-    tri[7].p[0] = (vec3_d){-1.0, -1.0, -1.0};
-    tri[7].p[1] = (vec3_d){-1.0, -1.0,  1.0};
-    tri[7].p[2] = (vec3_d){ 1.0, -1.0,  1.0};
+    tri[7].p[0] = (vec3_f){-1.0, -1.0, -1.0};
+    tri[7].p[1] = (vec3_f){-1.0, -1.0,  1.0};
+    tri[7].p[2] = (vec3_f){ 1.0, -1.0,  1.0};
     tri[7].color = WHITE;
 
     /* Right (+X) */
-    tri[8].p[0] = (vec3_d){ 1.0,  1.0,  1.0};
-    tri[8].p[1] = (vec3_d){ 1.0,  1.0, -1.0};
-    tri[8].p[2] = (vec3_d){ 1.0, -1.0, -1.0};
+    tri[8].p[0] = (vec3_f){ 1.0,  1.0,  1.0};
+    tri[8].p[1] = (vec3_f){ 1.0,  1.0, -1.0};
+    tri[8].p[2] = (vec3_f){ 1.0, -1.0, -1.0};
     tri[8].color = GOLD;
 
-    tri[9].p[0] = (vec3_d){ 1.0,  1.0,  1.0};
-    tri[9].p[1] = (vec3_d){ 1.0, -1.0, -1.0};
-    tri[9].p[2] = (vec3_d){ 1.0, -1.0,  1.0};
+    tri[9].p[0] = (vec3_f){ 1.0,  1.0,  1.0};
+    tri[9].p[1] = (vec3_f){ 1.0, -1.0, -1.0};
+    tri[9].p[2] = (vec3_f){ 1.0, -1.0,  1.0};
     tri[9].color = GOLD;
 
     /* Left (-X) */
-    tri[10].p[0] = (vec3_d){-1.0,  1.0, -1.0};
-    tri[10].p[1] = (vec3_d){-1.0,  1.0,  1.0};
-    tri[10].p[2] = (vec3_d){-1.0, -1.0,  1.0};
+    tri[10].p[0] = (vec3_f){-1.0,  1.0, -1.0};
+    tri[10].p[1] = (vec3_f){-1.0,  1.0,  1.0};
+    tri[10].p[2] = (vec3_f){-1.0, -1.0,  1.0};
     tri[10].color = GREEN;
 
-    tri[11].p[0] = (vec3_d){-1.0,  1.0, -1.0};
-    tri[11].p[1] = (vec3_d){-1.0, -1.0,  1.0};
-    tri[11].p[2] = (vec3_d){-1.0, -1.0, -1.0};
+    tri[11].p[0] = (vec3_f){-1.0,  1.0, -1.0};
+    tri[11].p[1] = (vec3_f){-1.0, -1.0,  1.0};
+    tri[11].p[2] = (vec3_f){-1.0, -1.0, -1.0};
     tri[11].color = GREEN;
 
-    //vec3_d trans = {1.5, 1.5, 5.0};
-    vec3_d camera = {0.0, 0.0, 0.0};
+    vec3_f camera = {0.0f, 0.0f, 0.0f};
 
     for (int i = 0; i < 12; i++) {
-        vec3_d a = tri[i].p[0];
-        vec3_d b = tri[i].p[1];
-        vec3_d c = tri[i].p[2];
+        vec3_f a = tri[i].p[0];
+        vec3_f b = tri[i].p[1];
+        vec3_f c = tri[i].p[2];
 
-        vec3_d trans_point_a = add_vectors(_rotate_vector_y(a, angle), trans);
-        vec3_d trans_point_b = add_vectors(_rotate_vector_y(b, angle), trans);
-        vec3_d trans_point_c = add_vectors(_rotate_vector_y(c, angle), trans);
+        vec3_f trans_point_a = add_vectors(_rotate_vector_y(a, angle), trans);
+        vec3_f trans_point_b = add_vectors(_rotate_vector_y(b, angle), trans);
+        vec3_f trans_point_c = add_vectors(_rotate_vector_y(c, angle), trans);
 
-        vec3_d normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
+        vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
-        vec3_d cam_vec;
+        vec3_f cam_vec;
         cam_vec.x = trans_point_a.x - camera.x;
         cam_vec.y = trans_point_a.y - camera.y;
         cam_vec.z = trans_point_a.z - camera.z;
 
         cam_vec = normalize(cam_vec);
 
-        double_t dot = calculate_dot_product(normal, cam_vec);
+        float_t dot = calculate_dot_product(normal, cam_vec);
 
         if (dot > 0.0) {
-            vec2_d proj_point_a = project_point(trans_point_a);
-            vec2_d proj_point_b = project_point(trans_point_b);
-            vec2_d proj_point_c = project_point(trans_point_c);
 
-            // if (dot > 1.0) {
-            //     dot = 1.0;
-            // }
+            vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1}, proj));
+            vec3_f proj_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_b.x, trans_point_b.y, trans_point_b.z, 1}, proj));
+            vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_c.x, trans_point_c.y, trans_point_c.z, 1}, proj));
 
             pixel_data new_col = {0};
-            new_col.r = (double_t)tri[i].color.r * dot;
-            new_col.g = (double_t)tri[i].color.g * dot;
-            new_col.b = (double_t)tri[i].color.b * dot;
+            new_col.r = (float_t)tri[i].color.r * dot;
+            new_col.g = (float_t)tri[i].color.g * dot;
+            new_col.b = (float_t)tri[i].color.b * dot;
 
-            draw_triangle_fill(proj_point_a, proj_point_b, proj_point_c, new_col, buffer);
+            draw_triangle_fill((vec2_f){proj_point_a.x, proj_point_a.y}, 
+                               (vec2_f){proj_point_b.x, proj_point_b.y}, 
+                               (vec2_f){proj_point_c.x, proj_point_c.y}, 
+                               new_col, buffer);
         }
 
     }

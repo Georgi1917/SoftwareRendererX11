@@ -77,13 +77,16 @@ int main(void)
     XEvent event;
 
     float_t dt = 1.0f / 60.0f;
+    mat4x4_f proj = perspective(convert_to_radians(90.0f), 
+                                back_buffer->width / back_buffer->height,
+                                0.1f, 1000.0f);
 
     while (running) {
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_d){1.5, 1.5, 5.0});
-        draw_cube(back_buffer, dt, (vec3_d){-3.5, -1.5, 5.0});
+        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj);
+        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj);
 
         XPutImage(
             display,
