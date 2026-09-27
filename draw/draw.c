@@ -316,10 +316,7 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj) {
 
         vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
-        vec3_f cam_vec;
-        cam_vec.x = trans_point_a.x - camera.x;
-        cam_vec.y = trans_point_a.y - camera.y;
-        cam_vec.z = trans_point_a.z - camera.z;
+        vec3_f cam_vec = sub_vectors(trans_point_a, camera);
 
         cam_vec = normalize(cam_vec);
 

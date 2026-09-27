@@ -42,6 +42,16 @@ vec3_f add_vectors(vec3_f a, vec3_f b) {
     return ret;
 }
 
+vec3_f sub_vectors(vec3_f a, vec3_f b) {
+    vec3_f ret = {0};
+
+    ret.x = a.x - b.x;
+    ret.y = a.y - b.y;
+    ret.z = a.z - b.z;
+
+    return ret;
+}
+
 vec2_f project_point(vec3_f p) {
     vec2_f ret = {0};
 
