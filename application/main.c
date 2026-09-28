@@ -81,12 +81,15 @@ int main(void)
                                 back_buffer->width / back_buffer->height,
                                 0.1f, 1000.0f);
 
+    vec3_f camera = {0.0f, 0.0f, 0.0f};
+    vec3_f look_dir = {0.0f, 0.0f, 1.0f};
+
     while (running) {
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj);
-        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj);
+        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, look_dir);
+        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, look_dir);
 
         XPutImage(
             display,
@@ -113,10 +116,30 @@ int main(void)
 
             break;
 
-        case KeyPress:
+        case KeyPress: {
             
-            running = 0;
+            if (XLookupKeysym(&event.xkey, 0) == XK_Up) {
+                camera.y += 10.0f * dt;
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_Down) {
+                camera.y -= 10.0f * dt;
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_Left) {
+                camera.x -= 10.0f * dt;
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_Right) {
+                camera.x += 10.0f * dt;
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_w) {
+                vec3_f forward = mul_vector(look_dir, 10 * dt);
+                camera = add_vectors(camera, forward);
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_s) {
+                vec3_f forward = mul_vector(look_dir, 10 * dt);
+                camera = sub_vectors(camera, forward);
+            }
             break;
+        }
 
         case DestroyNotify:
 

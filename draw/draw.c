@@ -232,7 +232,7 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj) {
+void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f look_dir) {
     
     static float_t angle = 0.0;
     triangle_d tri[12];
@@ -303,7 +303,11 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj) {
     tri[11].p[2] = (vec3_f){-1.0, -1.0, -1.0};
     tri[11].color = GREEN;
 
-    vec3_f camera = {0.0f, 0.0f, 0.0f};
+    //vec3_f look_dir = {0.0f, 0.0f, 1.0f};
+    vec3_f up = {0.0f, 1.0f, 0.0f};
+    vec3_f target_vec = add_vectors(camera_pos, look_dir);
+
+    mat4x4_f view_mat = look_at(camera_pos, target_vec, up);
 
     for (int i = 0; i < 12; i++) {
         vec3_f a = tri[i].p[0];
@@ -316,20 +320,28 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj) {
 
         vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
-        vec3_f cam_vec = sub_vectors(trans_point_a, camera);
-
+        vec3_f cam_vec = sub_vectors(trans_point_a, camera_pos);
         cam_vec = normalize(cam_vec);
 
-        float_t dot = calculate_dot_product(normal, cam_vec);
+        float_t dot = calculate_dot_product(cam_vec, normal);
 
-        if (dot > 0.0) {
+        vec3_f view_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                        ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1.0f}, view_mat));
+
+        vec3_f view_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                        ((vec4_f){trans_point_b.x, trans_point_b.y, trans_point_b.z, 1.0f}, view_mat));
+                                        
+        vec3_f view_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                        ((vec4_f){trans_point_c.x, trans_point_c.y, trans_point_c.z, 1.0f}, view_mat));
+
+        if (dot > 0.0f) {
 
             vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
-                                            ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1}, proj));
+                                            ((vec4_f){view_point_a.x, view_point_a.y, view_point_a.z, 1.0f}, proj));
             vec3_f proj_point_b = to_cartesian_coords(multiply_vec4_mat4
-                                            ((vec4_f){trans_point_b.x, trans_point_b.y, trans_point_b.z, 1}, proj));
+                                            ((vec4_f){view_point_b.x, view_point_b.y, view_point_b.z, 1.0f}, proj));
             vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
-                                            ((vec4_f){trans_point_c.x, trans_point_c.y, trans_point_c.z, 1}, proj));
+                                            ((vec4_f){view_point_c.x, view_point_c.y, view_point_c.z, 1.0f}, proj));
 
             pixel_data new_col = {0};
             new_col.r = (float_t)tri[i].color.r * dot;
