@@ -61,6 +61,13 @@ vec2_f project_point(vec3_f p);
 mat4x4_f perspective(float_t fov_rad, float_t aspect, float_t z_near, float_t z_far);
 mat4x4_f look_at(vec3_f pos, vec3_f target, vec3_f up);
 mat4x4_f matrix_quick_invert(mat4x4_f mat);
+
+mat4x4_f matrix_rotation_x(float_t angle_rad);
+mat4x4_f matrix_rotation_y(float_t angle_rad);
+mat4x4_f matrix_rotation_z(float_t angle_rad);
+mat4x4_f matrix_translation(float_t x, float_t y, float_t z);
+
+mat4x4_f multiply_mat4_mat4(mat4x4_f mat1, mat4x4_f mat2);
 vec4_f multiply_vec4_mat4(vec4_f vec, mat4x4_f mat);
 
 #endif

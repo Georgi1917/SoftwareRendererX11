@@ -144,6 +144,72 @@ mat4x4_f look_at(vec3_f pos, vec3_f target, vec3_f up) {
 
 }
 
+mat4x4_f matrix_rotation_x(float_t angle_rad) {
+    mat4x4_f mat = {0.0f};
+
+    mat.m[0][0] = 1.0f;
+    mat.m[1][1] = cosf(angle_rad);
+    mat.m[1][2] = sinf(angle_rad);
+    mat.m[2][1] = -sinf(angle_rad);
+    mat.m[2][2] = cosf(angle_rad);
+    mat.m[3][3] = 1.0f;
+
+    return mat;
+
+}
+
+mat4x4_f matrix_rotation_y(float_t angle_rad) {
+    mat4x4_f mat = {0.0f};
+
+    mat.m[0][0] = cosf(angle_rad);
+    mat.m[0][2] = sinf(angle_rad);
+    mat.m[2][0] = -sinf(angle_rad);
+    mat.m[1][1] = 1.0f;
+    mat.m[2][2] = cosf(angle_rad);
+    mat.m[3][3] = 1.0f;
+
+    return mat;
+}
+
+mat4x4_f matrix_rotation_z(float_t angle_rad) {
+    mat4x4_f mat = {0.0f};
+
+    mat.m[0][0] = cosf(angle_rad);
+    mat.m[0][1] = sinf(angle_rad);
+    mat.m[1][0] = -sinf(angle_rad);
+    mat.m[1][1] = cosf(angle_rad);
+    mat.m[2][2] = 1.0f;
+    mat.m[3][3] = 1.0f;
+
+    return mat;
+}
+
+mat4x4_f matrix_translation(float_t x, float_t y, float_t z) {
+    mat4x4_f mat = {0.0f};
+
+    mat.m[0][0] = 1.0f;
+    mat.m[1][1] = 1.0f;
+    mat.m[2][2] = 1.0f;
+    mat.m[3][3] = 1.0f;
+    mat.m[3][0] = x;
+    mat.m[3][1] = y;
+    mat.m[3][2] = z;
+
+    return mat;
+}
+
+mat4x4_f multiply_mat4_mat4(mat4x4_f mat1, mat4x4_f mat2) {
+    mat4x4_f mat = {0.0f};
+
+    for (uint8_t c = 0; c < 4; c++) {
+        for (uint8_t r = 0; r < 4; r++) {
+            mat.m[r][c] = mat1.m[r][0] * mat2.m[0][c] + mat1.m[r][1] * mat2.m[1][c] + mat1.m[r][2] * mat2.m[2][c] + mat1.m[r][3] * mat2.m[3][c];
+        }
+    }
+
+    return mat;
+}
+
 vec4_f multiply_vec4_mat4(vec4_f vec, mat4x4_f mat) {
     vec4_f ret = {0};
 

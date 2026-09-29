@@ -83,13 +83,15 @@ int main(void)
 
     vec3_f camera = {0.0f, 0.0f, 0.0f};
     vec3_f look_dir = {0.0f, 0.0f, 1.0f};
+    float_t f_yaw = 0.0f;
+    float_t f_pitch = 0.0f;
 
     while (running) {
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, look_dir);
-        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, look_dir);
+        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, look_dir, f_yaw, f_pitch);
+        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, look_dir, f_yaw, f_pitch);
 
         XPutImage(
             display,
@@ -131,12 +133,30 @@ int main(void)
                 camera.x += 10.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_w) {
-                vec3_f forward = mul_vector(look_dir, 10 * dt);
+                vec3_f forward = mul_vector(look_dir, 10.0f * dt);
                 camera = add_vectors(camera, forward);
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_s) {
-                vec3_f forward = mul_vector(look_dir, 10 * dt);
+                vec3_f forward = mul_vector(look_dir, 10.0f * dt);
                 camera = sub_vectors(camera, forward);
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_a) {
+                f_yaw += 3.0f * dt;
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_d) {
+                f_yaw -= 3.0f * dt;
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_Shift_L) {
+                f_pitch -= 3.0f * dt;
+                if (f_pitch < -89.0f) {
+                    f_pitch = -89.0f;
+                }
+            }
+            if (XLookupKeysym(&event.xkey, 0) == XK_Control_L) {
+                f_pitch += 3.0f * dt;
+                if (f_pitch > 89.0f) {
+                    f_pitch = 89.0f;
+                }
             }
             break;
         }

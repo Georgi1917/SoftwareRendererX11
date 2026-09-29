@@ -200,30 +200,6 @@ void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, scre
 
 }
 
-vec3_f _rotate_vector_y(vec3_f v, float_t angle) {
-
-    float_t rad_angle = convert_to_radians(angle);
-    vec3_f ret_point = {0};
-
-    mat3x3_f rot_matrix = {0};
-    rot_matrix.m[0][0] = cosf(rad_angle);
-    rot_matrix.m[0][1] = 0.0f;
-    rot_matrix.m[0][2] = sinf(rad_angle);
-    rot_matrix.m[1][0] = 0.0f;
-    rot_matrix.m[1][1] = 1.0f;
-    rot_matrix.m[1][2] = 0.0f;
-    rot_matrix.m[2][0] = -sinf(rad_angle);
-    rot_matrix.m[2][1] = 0.0f;
-    rot_matrix.m[2][2] = cosf(rad_angle);
-
-    ret_point.x = v.x * rot_matrix.m[0][0] + v.y * rot_matrix.m[0][1] + v.z * rot_matrix.m[0][2];
-    ret_point.y = v.x * rot_matrix.m[1][0] + v.y * rot_matrix.m[1][1] + v.z * rot_matrix.m[1][2];
-    ret_point.z = v.x * rot_matrix.m[2][0] + v.y * rot_matrix.m[2][1] + v.z * rot_matrix.m[2][2];
-
-    return ret_point;
-
-}
-
 void clear_buffer(pixel_data data, screen_buffer* buffer) {
     for (uint16_t y = 0; y < buffer->height; y++) {
         for (uint16_t x = 0; x < buffer->width; x++) {
@@ -232,7 +208,7 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f look_dir) {
+void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f look_dir, float_t f_yaw, float_t f_pitch) {
     
     static float_t angle = 0.0;
     triangle_d tri[12];
@@ -303,20 +279,37 @@ void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, v
     tri[11].p[2] = (vec3_f){-1.0, -1.0, -1.0};
     tri[11].color = GREEN;
 
-    //vec3_f look_dir = {0.0f, 0.0f, 1.0f};
     vec3_f up = {0.0f, 1.0f, 0.0f};
-    vec3_f target_vec = add_vectors(camera_pos, look_dir);
+    vec3_f target_vec = {0.0f, 0.0f, 1.0f};
+
+    mat4x4_f mat_camera_rot_y = matrix_rotation_y(f_yaw);
+    mat4x4_f mat_camera_rot_x = matrix_rotation_x(f_pitch);
+    mat4x4_f mat_camera = multiply_mat4_mat4(mat_camera_rot_y, mat_camera_rot_x);
+
+    look_dir = to_cartesian_coords(multiply_vec4_mat4
+                        ((vec4_f){target_vec.x, target_vec.y, target_vec.z, 1.0f}, mat_camera));
+
+    target_vec = add_vectors(camera_pos, look_dir);
 
     mat4x4_f view_mat = look_at(camera_pos, target_vec, up);
+
+    mat4x4_f trans_mat = matrix_translation(trans.x, trans.y, trans.z);
+    mat4x4_f rot_mat_y = matrix_rotation_y(convert_to_radians(angle));
+    mat4x4_f world_mat = multiply_mat4_mat4(rot_mat_y, trans_mat);
 
     for (int i = 0; i < 12; i++) {
         vec3_f a = tri[i].p[0];
         vec3_f b = tri[i].p[1];
         vec3_f c = tri[i].p[2];
 
-        vec3_f trans_point_a = add_vectors(_rotate_vector_y(a, angle), trans);
-        vec3_f trans_point_b = add_vectors(_rotate_vector_y(b, angle), trans);
-        vec3_f trans_point_c = add_vectors(_rotate_vector_y(c, angle), trans);
+        vec3_f trans_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                        ((vec4_f){a.x, a.y, a.z, 1.0f}, world_mat));
+
+        vec3_f trans_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                        ((vec4_f){b.x, b.y, b.z, 1.0f}, world_mat));
+                                        
+        vec3_f trans_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                        ((vec4_f){c.x, c.y, c.z, 1.0f}, world_mat));
 
         vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
