@@ -208,7 +208,7 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, float_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f look_dir, float_t f_yaw, float_t f_pitch) {
+void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f look_dir, float_t f_yaw, float_t f_pitch) {
     
     static float_t angle = 0.0;
     triangle_d tri[12];

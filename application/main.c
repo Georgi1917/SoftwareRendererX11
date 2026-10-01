@@ -13,6 +13,13 @@
 #include "colors.h"
 #include "screen_buffer.h"
 
+double_t get_time() {
+    struct timespec t;
+    clock_gettime(CLOCK_MONOTONIC, &t);
+
+    return (double_t)t.tv_sec + (double_t)t.tv_nsec * 1e-9;
+}
+
 int main(void)
 {
 
@@ -76,7 +83,7 @@ int main(void)
     int running = 1;
     XEvent event;
 
-    float_t dt = 1.0f / 60.0f;
+    //float_t dt = 1.0f / 60.0f;
     mat4x4_f proj = perspective(convert_to_radians(90.0f), 
                                 back_buffer->width / back_buffer->height,
                                 0.1f, 1000.0f);
@@ -86,7 +93,14 @@ int main(void)
     float_t f_yaw = 0.0f;
     float_t f_pitch = 0.0f;
 
+    double_t prev = get_time();
+
     while (running) {
+
+        double_t curr = get_time();
+        double_t dt = curr - prev;
+        prev = curr;
+        printf("Time : %f\r", dt);
 
         clear_buffer(DARKGRAY, back_buffer);
 
@@ -133,11 +147,11 @@ int main(void)
                 camera.x += 10.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_w) {
-                vec3_f forward = mul_vector(look_dir, 10.0f * dt);
+                vec3_f forward = mul_vector(look_dir, 5.0f * dt);
                 camera = add_vectors(camera, forward);
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_s) {
-                vec3_f forward = mul_vector(look_dir, 10.0f * dt);
+                vec3_f forward = mul_vector(look_dir, 5.0f * dt);
                 camera = sub_vectors(camera, forward);
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_a) {
