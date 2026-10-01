@@ -1,3 +1,4 @@
-add_library(cc_struct_utils_static STATIC dyn_list.c screen_buffer.c)
+add_library(cc_struct_utils_static STATIC struct_utils.c)
 
 target_include_directories(cc_struct_utils_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(cc_struct_utils_static PRIVATE cc_h_math_static)

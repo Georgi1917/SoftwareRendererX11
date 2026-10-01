@@ -11,7 +11,7 @@
 
 #include "draw.h"
 #include "colors.h"
-#include "screen_buffer.h"
+#include "struct_utils.h"
 
 double_t get_time() {
     struct timespec t;
@@ -83,7 +83,6 @@ int main(void)
     int running = 1;
     XEvent event;
 
-    //float_t dt = 1.0f / 60.0f;
     mat4x4_f proj = perspective(convert_to_radians(90.0f), 
                                 back_buffer->width / back_buffer->height,
                                 0.1f, 1000.0f);
@@ -104,8 +103,8 @@ int main(void)
 
         clear_buffer(DARKGRAY, back_buffer);
 
-        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, look_dir, f_yaw, f_pitch);
-        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, look_dir, f_yaw, f_pitch);
+        draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
+        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
 
         XPutImage(
             display,
@@ -134,17 +133,17 @@ int main(void)
 
         case KeyPress: {
             
-            if (XLookupKeysym(&event.xkey, 0) == XK_Up) {
+            if (XLookupKeysym(&event.xkey, 0) == XK_Shift_L) {
                 camera.y += 10.0f * dt;
             }
-            if (XLookupKeysym(&event.xkey, 0) == XK_Down) {
+            if (XLookupKeysym(&event.xkey, 0) == XK_Control_L) {
                 camera.y -= 10.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Left) {
-                camera.x -= 10.0f * dt;
+                f_yaw += 3.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Right) {
-                camera.x += 10.0f * dt;
+                f_yaw -= 3.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_w) {
                 vec3_f forward = mul_vector(look_dir, 5.0f * dt);
@@ -155,18 +154,18 @@ int main(void)
                 camera = sub_vectors(camera, forward);
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_a) {
-                f_yaw += 3.0f * dt;
+                camera.x -= 10.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_d) {
-                f_yaw -= 3.0f * dt;
+                camera.x += 10.0f * dt;
             }
-            if (XLookupKeysym(&event.xkey, 0) == XK_Shift_L) {
+            if (XLookupKeysym(&event.xkey, 0) == XK_Up) {
                 f_pitch -= 3.0f * dt;
                 if (f_pitch < -89.0f) {
                     f_pitch = -89.0f;
                 }
             }
-            if (XLookupKeysym(&event.xkey, 0) == XK_Control_L) {
+            if (XLookupKeysym(&event.xkey, 0) == XK_Down) {
                 f_pitch += 3.0f * dt;
                 if (f_pitch > 89.0f) {
                     f_pitch = 89.0f;

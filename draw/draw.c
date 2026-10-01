@@ -4,7 +4,6 @@
 #include <math.h>
 
 #include "draw.h"
-#include "dyn_list.h"
 
 #define PI 3.1415926535
 
@@ -208,7 +207,7 @@ void clear_buffer(pixel_data data, screen_buffer* buffer) {
     }
 }
 
-void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f look_dir, float_t f_yaw, float_t f_pitch) {
+void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* look_dir, float_t f_yaw, float_t f_pitch) {
     
     static float_t angle = 0.0;
     triangle_d tri[12];
@@ -286,10 +285,10 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
     mat4x4_f mat_camera_rot_x = matrix_rotation_x(f_pitch);
     mat4x4_f mat_camera = multiply_mat4_mat4(mat_camera_rot_y, mat_camera_rot_x);
 
-    look_dir = to_cartesian_coords(multiply_vec4_mat4
+    *look_dir = to_cartesian_coords(multiply_vec4_mat4
                         ((vec4_f){target_vec.x, target_vec.y, target_vec.z, 1.0f}, mat_camera));
 
-    target_vec = add_vectors(camera_pos, look_dir);
+    target_vec = add_vectors(camera_pos, *look_dir);
 
     mat4x4_f view_mat = look_at(camera_pos, target_vec, up);
 
