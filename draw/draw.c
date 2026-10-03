@@ -104,6 +104,76 @@ void _swap_points(vec2_i*a, vec2_i *b) {
 
 }
 
+tr_queue* init_queue() {
+    tr_queue* q = malloc(sizeof(tr_queue));
+    q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
+
+    return q;
+}
+
+void enqueue(tr_queue* q, triangle_d el) {
+    node* new = malloc(sizeof(node));
+    new->el = el;
+    new->next = NULL;
+
+    if (q->tail != NULL) {
+        q->tail->next = new;
+    }
+    q->tail = new;
+
+    if (q->head == NULL) {
+        q->head = new;
+    }
+    q->size++;
+}
+
+void dequeue(tr_queue* q) {
+
+    if (q->head == NULL) {
+        perror("Head is empty!\n");
+        return;
+    }
+
+    node* tmp = q->head;
+    q->head = q->head->next;
+
+    if (q->head == NULL) {
+        q->tail = NULL;
+    }
+    free(tmp);
+    q->size--;
+
+}
+
+void front(tr_queue* q, triangle_d* tr) {
+
+    if (q->head == NULL) {
+        perror("Head is empty!\n");
+        return;
+    }
+
+    *tr = q->head->el;
+
+}
+
+void free_queue(tr_queue* q) {
+    node* current = q->head;
+
+    while(current != NULL) {
+        node* next = current->next;
+        free(current);
+        current = next;
+    }
+
+    q->head = NULL;
+    q->tail = NULL;
+
+    free(q);
+
+}
+
 bool put_pixel(int16_t x, int16_t y, screen_buffer* buffer, pixel_data data) {
 
     if (((x > buffer->width) || (x < 0)) || ((y > buffer->height) || (y < 0))) {

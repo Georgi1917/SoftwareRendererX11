@@ -13,6 +13,23 @@ typedef struct {
     pixel_data color;
 } triangle_d;
 
+typedef struct node {
+    triangle_d el;
+    struct node* next;
+} node;
+
+typedef struct {
+    node* head;
+    node* tail;
+    uint32_t size;
+} tr_queue;
+
+tr_queue* init_queue();
+void enqueue(tr_queue* q, triangle_d el);
+void front(tr_queue* q, triangle_d* tr);
+void dequeue(tr_queue* q);
+void free_queue(tr_queue* q);
+
 bool put_pixel(int16_t x, int16_t y, screen_buffer* buffer, pixel_data data);
 void clear_buffer(pixel_data data, screen_buffer* buffer);
 
