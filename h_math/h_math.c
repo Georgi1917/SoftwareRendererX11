@@ -61,6 +61,20 @@ vec3_f mul_vector(vec3_f a, float_t b) {
     return ret;
 }
 
+vec3_f vector_intersect_plane(vec3_f plane_p, vec3_f plane_n, vec3_f line_start, vec3_f line_end) {
+    plane_n = normalize(plane_n);
+    
+    float_t plane_d = -calculate_dot_product(plane_n, plane_p);
+    float_t ad = calculate_dot_product(line_start, plane_n);
+    float_t bd = calculate_dot_product(line_end, plane_n);
+    float_t t = (-plane_d - ad) / (bd - ad);
+
+    vec3_f line_start_to_end = sub_vectors(line_end, line_start);
+    vec3_f line_to_intersect = mul_vector(line_start_to_end, t);
+
+    return add_vectors(line_start, line_to_intersect);
+}
+
 vec2_f project_point(vec3_f p) {
     vec2_f ret = {0};
 

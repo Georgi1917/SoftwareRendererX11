@@ -199,6 +199,67 @@ void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, scre
 
 }
 
+float_t dist_point_plane(vec3_f p, vec3_f plane_p, vec3_f plane_n) {
+    vec3_f n = normalize(p);
+    return (plane_n.x * n.x + plane_n.y * n.y + plane_n.z * n.z - calculate_dot_product(plane_n, plane_p));
+}
+
+uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d* in_tri, triangle_d* out_tri1, triangle_d* out_tri2) {
+    plane_n = normalize(plane_n);
+
+    vec3_f* inside_points[3] ; uint8_t inside_point_count = 0;
+    vec3_f* outside_points[3]; uint8_t outside_point_count = 0;
+
+    if (dist_point_plane(in_tri->p[0], plane_p, plane_n) >= 0.0f) {
+        inside_points[inside_point_count++] = &in_tri->p[0];
+    } else { outside_points[outside_point_count++] = &in_tri->p[0]; }
+    if (dist_point_plane(in_tri->p[1], plane_p, plane_n) >= 0.0f) {
+        inside_points[inside_point_count++] = &in_tri->p[1];
+    } else { outside_points[outside_point_count++] = &in_tri->p[1]; }
+    if (dist_point_plane(in_tri->p[2], plane_p, plane_n) >= 0.0f) {
+        inside_points[inside_point_count++] = &in_tri->p[2];
+    } else { outside_points[outside_point_count++] = &in_tri->p[2]; }
+
+    if (inside_point_count == 0) {
+        return 0;
+    }
+
+    if (inside_point_count == 3) {
+        *out_tri1 = *in_tri;
+        return 1;
+    }
+
+    if (inside_point_count == 1 && outside_point_count == 2) {
+
+        out_tri1->color = in_tri->color;
+
+        out_tri1->p[0] = in_tri->p[0];
+
+        out_tri1->p[1] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+        out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[1]);
+
+        return 1;
+    }
+
+    if (inside_point_count == 2 && outside_point_count == 1) {
+
+        out_tri1->color = in_tri->color;
+        out_tri2->color = in_tri->color;
+
+        out_tri1->p[0] = *inside_points[0];
+        out_tri1->p[1] = *inside_points[1];
+        out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+
+        out_tri2->p[0] = *inside_points[0];
+        out_tri2->p[1] = out_tri1->p[2];
+        out_tri2->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
+
+        return 2;
+    }
+
+    return 0;
+}
+
 void clear_buffer(pixel_data data, screen_buffer* buffer) {
     for (uint16_t y = 0; y < buffer->height; y++) {
         for (uint16_t x = 0; x < buffer->width; x++) {
@@ -296,6 +357,9 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
     mat4x4_f rot_mat_y = matrix_rotation_y(convert_to_radians(angle));
     mat4x4_f world_mat = multiply_mat4_mat4(rot_mat_y, trans_mat);
 
+    triangle_d tri_to_raster[512] = {0.0f};
+    uint16_t tri_count = 0;
+
     for (int i = 0; i < 12; i++) {
         vec3_f a = tri[i].p[0];
         vec3_f b = tri[i].p[1];
@@ -312,40 +376,72 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
 
         vec3_f normal = calculate_normal(trans_point_a, trans_point_b, trans_point_c);
 
-        vec3_f cam_vec = sub_vectors(trans_point_a, camera_pos);
-        cam_vec = normalize(cam_vec);
+        float_t cam_dot = calculate_dot_product(normalize(sub_vectors(trans_point_a, camera_pos)), normal);
 
-        float_t dot = calculate_dot_product(cam_vec, normal);
+        if (cam_dot > 0.0f) {
 
-        vec3_f view_point_a = to_cartesian_coords(multiply_vec4_mat4
-                                        ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1.0f}, view_mat));
+            vec3_f light_pos = {0.0f, 4.0f, -1.0f};
+            vec3_f light_vec = sub_vectors(trans_point_a, light_pos);
+            light_vec = normalize(light_vec);
+            float_t dot = calculate_dot_product(light_vec, normal);
 
-        vec3_f view_point_b = to_cartesian_coords(multiply_vec4_mat4
-                                        ((vec4_f){trans_point_b.x, trans_point_b.y, trans_point_b.z, 1.0f}, view_mat));
-                                        
-        vec3_f view_point_c = to_cartesian_coords(multiply_vec4_mat4
-                                        ((vec4_f){trans_point_c.x, trans_point_c.y, trans_point_c.z, 1.0f}, view_mat));
-
-        if (dot > 0.0f) {
-
-            vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
-                                            ((vec4_f){view_point_a.x, view_point_a.y, view_point_a.z, 1.0f}, proj));
-            vec3_f proj_point_b = to_cartesian_coords(multiply_vec4_mat4
-                                            ((vec4_f){view_point_b.x, view_point_b.y, view_point_b.z, 1.0f}, proj));
-            vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
-                                            ((vec4_f){view_point_c.x, view_point_c.y, view_point_c.z, 1.0f}, proj));
+            if (dot > 1.0f) dot = 1.0f;
+            if (dot < 0.0f) dot = 0.0f;
 
             pixel_data new_col = {0};
             new_col.r = (float_t)tri[i].color.r * dot;
             new_col.g = (float_t)tri[i].color.g * dot;
             new_col.b = (float_t)tri[i].color.b * dot;
 
-            draw_triangle_fill((vec2_f){proj_point_a.x, proj_point_a.y}, 
-                               (vec2_f){proj_point_b.x, proj_point_b.y}, 
-                               (vec2_f){proj_point_c.x, proj_point_c.y}, 
-                               new_col, buffer);
+            vec3_f view_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_a.x, trans_point_a.y, trans_point_a.z, 1.0f}, view_mat));
+
+            vec3_f view_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_b.x, trans_point_b.y, trans_point_b.z, 1.0f}, view_mat));
+                                            
+            vec3_f view_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                            ((vec4_f){trans_point_c.x, trans_point_c.y, trans_point_c.z, 1.0f}, view_mat));
+
+            triangle_d to_clip = {0.0f};
+            to_clip.p[0] = view_point_a;
+            to_clip.p[1] = view_point_b;
+            to_clip.p[2] = view_point_c;
+            to_clip.color = tri[i].color;
+
+            triangle_d clipped[2];
+            uint8_t num_clipped = 0;
+
+            num_clipped = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.1f}, (vec3_f){0.0f, 0.0f, 1.0f}, &to_clip, &clipped[0], &clipped[1]);
+
+            printf("Num Clipped : %d\r", num_clipped);
+
+            for (uint8_t i = 0; i < num_clipped; i++) {
+
+                vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
+                                                ((vec4_f){clipped[i].p[0].x, clipped[i].p[0].y, clipped[i].p[0].z, 1.0f}, proj));
+                vec3_f proj_point_b = to_cartesian_coords(multiply_vec4_mat4
+                                                ((vec4_f){clipped[i].p[1].x, clipped[i].p[1].y, clipped[i].p[1].z, 1.0f}, proj));
+                vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
+                                                ((vec4_f){clipped[i].p[2].x, clipped[i].p[2].y, clipped[i].p[2].z, 1.0f}, proj));
+
+                triangle_d new = {0.0f};
+                new.p[0] = proj_point_a;
+                new.p[1] = proj_point_b;
+                new.p[2] = proj_point_c;
+                new.color = new_col;
+
+                tri_to_raster[tri_count++] = new;
+            }
         }
 
+    }
+
+    for (uint16_t i = 0; i < tri_count; i++) {
+        triangle_d t = tri_to_raster[i];
+
+        draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+                           (vec2_f){t.p[1].x, t.p[1].y},
+                           (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
     }
 
     angle += dt * 10.0;

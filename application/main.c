@@ -99,7 +99,7 @@ int main(void)
         double_t curr = get_time();
         double_t dt = curr - prev;
         prev = curr;
-        printf("Time : %f\r", dt);
+        //printf("Time : %f\r", dt);
 
         clear_buffer(DARKGRAY, back_buffer);
 
@@ -133,10 +133,10 @@ int main(void)
 
         case KeyPress: {
             
-            if (XLookupKeysym(&event.xkey, 0) == XK_Shift_L) {
+            if (XLookupKeysym(&event.xkey, 0) == XK_q) {
                 camera.y += 10.0f * dt;
             }
-            if (XLookupKeysym(&event.xkey, 0) == XK_Control_L) {
+            if (XLookupKeysym(&event.xkey, 0) == XK_z) {
                 camera.y -= 10.0f * dt;
             }
             if (XLookupKeysym(&event.xkey, 0) == XK_Left) {

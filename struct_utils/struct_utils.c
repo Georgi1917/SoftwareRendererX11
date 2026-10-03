@@ -83,19 +83,3 @@ void free_list(list_f* list) {
     free(list->data);
     free(list);
 }
-
-camera_t* camera_init(vec3_f pos, vec3_f look_dir) {
-    camera_t* camera = malloc(sizeof(camera_t));
-
-    if(!camera) {
-        perror("Failed to init camera!\n");
-        return NULL;
-    }
-
-    camera->camera_pos = pos;
-    camera->look_dir = look_dir;
-    camera->f_pitch = 0.0f;
-    camera->f_yaw = 0.0f;
-    camera->view_mat = look_at(pos, look_dir, (vec3_f){0.0f, 1.0f, 0.0f});
-
-}

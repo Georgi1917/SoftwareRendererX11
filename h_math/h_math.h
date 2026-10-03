@@ -56,6 +56,7 @@ vec3_f normalize(vec3_f vec);
 vec3_f add_vectors(vec3_f a, vec3_f b);
 vec3_f sub_vectors(vec3_f a, vec3_f b);
 vec3_f mul_vector(vec3_f a, float_t b);
+vec3_f vector_intersect_plane(vec3_f plane_p, vec3_f plane_n, vec3_f line_start, vec3_f line_end);
 vec2_f project_point(vec3_f p);
 
 mat4x4_f perspective(float_t fov_rad, float_t aspect, float_t z_near, float_t z_far);

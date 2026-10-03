@@ -21,6 +21,9 @@ void draw_line(int16_t x0, int16_t y0, int16_t x1, int16_t y1, pixel_data p_data
 void draw_triangle_wireframe(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, screen_buffer* buffer);
 void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, screen_buffer* buffer);
 
+float_t dist_point_plane(vec3_f p, vec3_f plane_p, vec3_f plane_n);
+uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d* in_tri, triangle_d* out_tri1, triangle_d* out_tri2);
+
 void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, vec3_f camera_pos, vec3_f* look_dir, float_t f_yaw, float_t f_pitch);
 
 #endif //__DRAW_H__
