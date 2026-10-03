@@ -169,6 +169,7 @@ void free_queue(tr_queue* q) {
 
     q->head = NULL;
     q->tail = NULL;
+    q->size = 0;
 
     free(q);
 
@@ -306,7 +307,7 @@ uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d* in_tri, 
         out_tri1->p[0] = in_tri->p[0];
 
         out_tri1->p[1] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
-        out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[1]);
+        out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[1]);
 
         return 1;
     }
@@ -483,9 +484,30 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
 
             num_clipped = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.1f}, (vec3_f){0.0f, 0.0f, 1.0f}, &to_clip, &clipped[0], &clipped[1]);
 
-            printf("Num Clipped : %d\r", num_clipped);
+            //printf("Num Clipped : %d\r", num_clipped);
 
             for (uint8_t i = 0; i < num_clipped; i++) {
+
+                // printf(
+                //     "tri %u: (%f, %f, %f) (%f, %f, %f) (%f, %f, %f)\n",
+                //     i,
+                //     clipped[i].p[0].x, clipped[i].p[0].y, clipped[i].p[0].z,
+                //     clipped[i].p[1].x, clipped[i].p[1].y, clipped[i].p[1].z,
+                //     clipped[i].p[2].x, clipped[i].p[2].y, clipped[i].p[2].z
+                // );
+
+                // vec4_f v = multiply_vec4_mat4(
+                //     (vec4_f){
+                //         clipped[i].p[2].x,
+                //         clipped[i].p[2].y,
+                //         clipped[i].p[2].z,
+                //         1.0f
+                //     },
+                //     proj
+                // );
+
+                // printf("before divide: x=%f y=%f z=%f w=%f\n",
+                //     v.x, v.y, v.z, v.w);
 
                 vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
                                                 ((vec4_f){clipped[i].p[0].x, clipped[i].p[0].y, clipped[i].p[0].z, 1.0f}, proj));
@@ -493,6 +515,13 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
                                                 ((vec4_f){clipped[i].p[1].x, clipped[i].p[1].y, clipped[i].p[1].z, 1.0f}, proj));
                 vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
                                                 ((vec4_f){clipped[i].p[2].x, clipped[i].p[2].y, clipped[i].p[2].z, 1.0f}, proj));
+
+                // if (!isfinite(proj_point_a.x) ||
+                //     !isfinite(proj_point_a.y) ||
+                //     !isfinite(proj_point_a.z)) {
+                //     printf("BAD PROJECTED VERTEX!\n");
+                //     continue;
+                // }
 
                 triangle_d new = {0.0f};
                 new.p[0] = proj_point_a;
@@ -507,12 +536,68 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
     }
 
     for (uint16_t i = 0; i < tri_count; i++) {
-        triangle_d t = tri_to_raster[i];
+        triangle_d tri = tri_to_raster[i];
 
-        draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+        triangle_d clipped[2];
+        tr_queue* q = init_queue();
+        enqueue(q, tri);
+
+        int32_t new_tri = 1;
+
+        for (uint8_t p = 0; p < 4; p++) {
+            uint8_t tris_to_add = 0;
+            if (tris_to_add != 0) {
+                printf("To add : %d\n", tris_to_add);
+            }
+
+            while (new_tri > 0) {
+                triangle_d test = {0.0f};
+                front(q, &test);
+                dequeue(q);
+
+                new_tri--;
+
+                switch(p) {
+                    case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
+                    case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, (float_t)buffer->height - 1, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
+                    case 2: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){1.0f, 0.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
+                    case 3: tris_to_add = triangle_clip_plane((vec3_f){(float_t)buffer->width - 1, 0.0f, 0.0f}, (vec3_f){-1.0f, 0.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
+                }
+
+                for (uint16_t w = 0; w < tris_to_add; w++) {
+                    enqueue(q, clipped[w]);
+                }
+            }
+            new_tri = q->size;
+        }
+
+        node* curr = q->head;
+        while(curr != NULL) {
+            triangle_d t = curr->el;
+
+            draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
                            (vec2_f){t.p[1].x, t.p[1].y},
                            (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+            draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
+                           (vec2_f){t.p[1].x, t.p[1].y},
+                           (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
+            
+            curr = curr->next;
+        }
+
+        free_queue(q);
     }
+
+    // for (uint16_t i = 0; i < tri_count; i++) {
+    //     triangle_d t = tri_to_raster[i];
+
+    //     draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
+    //                        (vec2_f){t.p[1].x, t.p[1].y},
+    //                        (vec2_f){t.p[2].x, t.p[2].y}, t.color, buffer);
+    //     draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
+    //                        (vec2_f){t.p[1].x, t.p[1].y},
+    //                        (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
+    // }
 
     angle += dt * 10.0;
 
