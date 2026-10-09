@@ -85,7 +85,7 @@ int main(void)
 
     mat4x4_f proj = perspective(convert_to_radians(90.0f), 
                                 back_buffer->width / back_buffer->height,
-                                0.1f, 1000.0f);
+                                1.0f, 1000.0f);
 
     vec3_f camera = {0.0f, 0.0f, 0.0f};
     vec3_f look_dir = {0.0f, 0.0f, 1.0f};
@@ -104,7 +104,7 @@ int main(void)
         clear_buffer(DARKGRAY, back_buffer);
 
         draw_cube(back_buffer, dt, (vec3_f){1.5f, 1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
-        draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
+        //draw_cube(back_buffer, dt, (vec3_f){-3.5f, -1.5f, 5.0f}, proj, camera, &look_dir, f_yaw, f_pitch);
 
         XPutImage(
             display,

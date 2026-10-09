@@ -75,6 +75,16 @@ vec3_f vector_intersect_plane(vec3_f plane_p, vec3_f plane_n, vec3_f line_start,
     return add_vectors(line_start, line_to_intersect);
 }
 
+float_t dist_point_plane(vec3_f p, vec3_f plane_p, vec3_f plane_n) {
+
+    plane_n = normalize(plane_n);
+    return calculate_dot_product(
+        sub_vectors(p, plane_p),
+        plane_n
+    );
+
+}
+
 vec2_f project_point(vec3_f p) {
     vec2_f ret = {0};
 
@@ -95,7 +105,7 @@ vec3_f normalize(vec3_f vec) {
 
 mat4x4_f perspective(float_t fov_rad, float_t aspect, float_t z_near, float_t z_far) {
 
-    mat4x4_f ret = {0};
+    mat4x4_f ret = {0.0f};
 
     float_t _fov = 1.0f / tanf(fov_rad * 0.5f);
 

@@ -270,42 +270,38 @@ void draw_triangle_fill(vec2_f p0, vec2_f p1, vec2_f p2, pixel_data p_data, scre
 
 }
 
-float_t dist_point_plane(vec3_f p, vec3_f plane_p, vec3_f plane_n) {
-    vec3_f n = normalize(p);
-    return (plane_n.x * n.x + plane_n.y * n.y + plane_n.z * n.z - calculate_dot_product(plane_n, plane_p));
-}
-
-uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d* in_tri, triangle_d* out_tri1, triangle_d* out_tri2) {
+uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d in_tri, triangle_d* out_tri1, triangle_d* out_tri2) {
     plane_n = normalize(plane_n);
 
     vec3_f* inside_points[3] ; uint8_t inside_point_count = 0;
     vec3_f* outside_points[3]; uint8_t outside_point_count = 0;
 
-    if (dist_point_plane(in_tri->p[0], plane_p, plane_n) >= 0.0f) {
-        inside_points[inside_point_count++] = &in_tri->p[0];
-    } else { outside_points[outside_point_count++] = &in_tri->p[0]; }
-    if (dist_point_plane(in_tri->p[1], plane_p, plane_n) >= 0.0f) {
-        inside_points[inside_point_count++] = &in_tri->p[1];
-    } else { outside_points[outside_point_count++] = &in_tri->p[1]; }
-    if (dist_point_plane(in_tri->p[2], plane_p, plane_n) >= 0.0f) {
-        inside_points[inside_point_count++] = &in_tri->p[2];
-    } else { outside_points[outside_point_count++] = &in_tri->p[2]; }
+    if (dist_point_plane(in_tri.p[0], plane_p, plane_n) >= 0.0f) {
+        inside_points[inside_point_count++] = &in_tri.p[0];
+    } else { outside_points[outside_point_count++] = &in_tri.p[0]; }
+    if (dist_point_plane(in_tri.p[1], plane_p, plane_n) >= 0.0f) {
+        inside_points[inside_point_count++] = &in_tri.p[1];
+    } else { outside_points[outside_point_count++] = &in_tri.p[1]; }
+    if (dist_point_plane(in_tri.p[2], plane_p, plane_n) >= 0.0f) {
+        inside_points[inside_point_count++] = &in_tri.p[2];
+    } else { outside_points[outside_point_count++] = &in_tri.p[2]; }
 
     if (inside_point_count == 0) {
         return 0;
     }
 
     if (inside_point_count == 3) {
-        *out_tri1 = *in_tri;
+        *out_tri1 = in_tri;
         return 1;
     }
 
     if (inside_point_count == 1 && outside_point_count == 2) {
 
-        out_tri1->color = in_tri->color;
+        out_tri1->color = in_tri.color;
 
-        out_tri1->p[0] = in_tri->p[0];
+        //out_tri1->p[0] = in_tri.p[0];
 
+        out_tri1->p[0] = *inside_points[0];
         out_tri1->p[1] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
         out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[1]);
 
@@ -314,16 +310,30 @@ uint8_t triangle_clip_plane(vec3_f plane_p, vec3_f plane_n, triangle_d* in_tri, 
 
     if (inside_point_count == 2 && outside_point_count == 1) {
 
-        out_tri1->color = in_tri->color;
-        out_tri2->color = in_tri->color;
+        out_tri1->color = in_tri.color;
+        out_tri2->color = in_tri.color;
 
-        out_tri1->p[0] = *inside_points[0];
-        out_tri1->p[1] = *inside_points[1];
-        out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+        // out_tri1->p[0] = *inside_points[0];
+        // out_tri1->p[1] = *inside_points[1];
+        // out_tri1->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[0], *outside_points[0]);
+
+        // out_tri2->p[0] = *inside_points[0];
+        // out_tri2->p[1] = out_tri1->p[2];
+        // out_tri2->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
 
         out_tri2->p[0] = *inside_points[0];
-        out_tri2->p[1] = out_tri1->p[2];
-        out_tri2->p[2] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
+        out_tri2->p[1] = vector_intersect_plane(plane_p, plane_n, *inside_points[1], *outside_points[0]);
+        out_tri2->p[2] = out_tri1->p[2];
+
+        printf("T1: (%f,%f) (%f,%f) (%f,%f)\n",
+            out_tri1->p[0].x, out_tri1->p[0].y,
+            out_tri1->p[1].x, out_tri1->p[1].y,
+            out_tri1->p[2].x, out_tri1->p[2].y);
+
+        printf("T2: (%f,%f) (%f,%f) (%f,%f)\n",
+            out_tri2->p[0].x, out_tri2->p[0].y,
+            out_tri2->p[1].x, out_tri2->p[1].y,
+            out_tri2->p[2].x, out_tri2->p[2].y);
 
         return 2;
     }
@@ -482,32 +492,9 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
             triangle_d clipped[2];
             uint8_t num_clipped = 0;
 
-            num_clipped = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.1f}, (vec3_f){0.0f, 0.0f, 1.0f}, &to_clip, &clipped[0], &clipped[1]);
-
-            //printf("Num Clipped : %d\r", num_clipped);
+            num_clipped = triangle_clip_plane((vec3_f){0.0f, 0.0f, 1.0f}, (vec3_f){0.0f, 0.0f, 1.0f}, to_clip, &clipped[0], &clipped[1]);
 
             for (uint8_t i = 0; i < num_clipped; i++) {
-
-                // printf(
-                //     "tri %u: (%f, %f, %f) (%f, %f, %f) (%f, %f, %f)\n",
-                //     i,
-                //     clipped[i].p[0].x, clipped[i].p[0].y, clipped[i].p[0].z,
-                //     clipped[i].p[1].x, clipped[i].p[1].y, clipped[i].p[1].z,
-                //     clipped[i].p[2].x, clipped[i].p[2].y, clipped[i].p[2].z
-                // );
-
-                // vec4_f v = multiply_vec4_mat4(
-                //     (vec4_f){
-                //         clipped[i].p[2].x,
-                //         clipped[i].p[2].y,
-                //         clipped[i].p[2].z,
-                //         1.0f
-                //     },
-                //     proj
-                // );
-
-                // printf("before divide: x=%f y=%f z=%f w=%f\n",
-                //     v.x, v.y, v.z, v.w);
 
                 vec3_f proj_point_a = to_cartesian_coords(multiply_vec4_mat4
                                                 ((vec4_f){clipped[i].p[0].x, clipped[i].p[0].y, clipped[i].p[0].z, 1.0f}, proj));
@@ -515,13 +502,6 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
                                                 ((vec4_f){clipped[i].p[1].x, clipped[i].p[1].y, clipped[i].p[1].z, 1.0f}, proj));
                 vec3_f proj_point_c = to_cartesian_coords(multiply_vec4_mat4
                                                 ((vec4_f){clipped[i].p[2].x, clipped[i].p[2].y, clipped[i].p[2].z, 1.0f}, proj));
-
-                // if (!isfinite(proj_point_a.x) ||
-                //     !isfinite(proj_point_a.y) ||
-                //     !isfinite(proj_point_a.z)) {
-                //     printf("BAD PROJECTED VERTEX!\n");
-                //     continue;
-                // }
 
                 triangle_d new = {0.0f};
                 new.p[0] = proj_point_a;
@@ -557,11 +537,18 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
 
                 new_tri--;
 
+                // switch(p) {
+                //     case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                //     case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, (float_t)buffer->height - 1, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                //     case 2: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                //     case 3: tris_to_add = triangle_clip_plane((vec3_f){(float_t)buffer->width - 1, 0.0f, 0.0f}, (vec3_f){-1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                // }
+
                 switch(p) {
-                    case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
-                    case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, (float_t)buffer->height - 1, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
-                    case 2: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 0.0f, 0.0f}, (vec3_f){1.0f, 0.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
-                    case 3: tris_to_add = triangle_clip_plane((vec3_f){(float_t)buffer->width - 1, 0.0f, 0.0f}, (vec3_f){-1.0f, 0.0f, 0.0f}, &test, &clipped[0], &clipped[1]); break;
+                    case 0: tris_to_add = triangle_clip_plane((vec3_f){0.0f, -1.0f, 0.0f}, (vec3_f){0.0f, 1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                    case 1: tris_to_add = triangle_clip_plane((vec3_f){0.0f, 1.0f, 0.0f}, (vec3_f){0.0f, -1.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                    case 2: tris_to_add = triangle_clip_plane((vec3_f){-1.0f, 0.0f, 0.0f}, (vec3_f){1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
+                    case 3: tris_to_add = triangle_clip_plane((vec3_f){1.0f, 0.0f, 0.0f}, (vec3_f){-1.0f, 0.0f, 0.0f}, test, &clipped[0], &clipped[1]); break;
                 }
 
                 for (uint16_t w = 0; w < tris_to_add; w++) {
@@ -571,8 +558,7 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
             new_tri = q->size;
         }
 
-        node* curr = q->head;
-        while(curr != NULL) {
+        for (node* curr = q->head; curr != NULL; curr = curr->next) {
             triangle_d t = curr->el;
 
             draw_triangle_fill((vec2_f){t.p[0].x, t.p[0].y}, 
@@ -581,11 +567,10 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
             draw_triangle_wireframe((vec2_f){t.p[0].x, t.p[0].y}, 
                            (vec2_f){t.p[1].x, t.p[1].y},
                            (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
-            
-            curr = curr->next;
         }
 
         free_queue(q);
+
     }
 
     // for (uint16_t i = 0; i < tri_count; i++) {
@@ -599,6 +584,6 @@ void draw_cube(screen_buffer* buffer, double_t dt, vec3_f trans, mat4x4_f proj, 
     //                        (vec2_f){t.p[2].x, t.p[2].y}, BLACK, buffer);
     // }
 
-    angle += dt * 10.0;
+    //angle += dt * 10.0;
 
 }
